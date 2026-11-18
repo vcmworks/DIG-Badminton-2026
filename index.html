@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Badminton Championship — Flexible Live Group Lottery</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #050b10;
+      color: #f8fafc;
+      overflow-x: hidden;
+    }
+
+    /* Broadcast court line grid texture */
+    .court-grid {
+      background-image:
+        radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.16) 0%, transparent 58%),
+        linear-gradient(to right, rgba(255, 255, 255, 0.024) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.024) 1px, transparent 1px);
+      background-size: 100% 100%, 44px 44px, 44px 44px;
+    }
+
+    @keyframes revealBounce {
+      0% { opacity: 0; transform: scale(0.84) translateY(14px); }
+      65% { opacity: 1; transform: scale(1.03) translateY(-2px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .animate-reveal {
+      animation: revealBounce 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes slotFlash {
+      0% {
+        box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.8);
+        background-color: rgba(250, 204, 21, 0.24);
+        border-color: rgba(250, 204, 21, 0.95);
+      }
+      100% {
+        box-shadow: 0 0 0 14px rgba(250, 204, 21, 0);
+        background-color: rgba(16, 185, 129, 0.12);
+        border-color: rgba(16, 185, 129, 0.45);
+      }
+    }
+
+    .slot-newly-drawn {
+      animation: slotFlash 1.4s ease-out forwards;
+    }
+
+    @keyframes shuttleSpin {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.15); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+
+    .animate-shuttle {
+      animation: shuttleSpin 0.5s linear infinite;
+    }
+
+    /* Visual Confetti Particle */
+    @keyframes confettiFall {
+      0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+    }
+
+    .confetti-piece {
+      position: fixed;
+      top: -12px;
+      width: 10px;
+      height: 14px;
+      border-radius: 3px;
+      z-index: 60;
+      pointer-events: none;
+      animation: confettiFall linear forwards;
+    }
+
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-card {
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #0f172a !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+      }
+      .print-text-dark {
+        color: #0f172a !important;
+      }
+    }
+  </style>
+</head>
+<body class="court-grid min-h-screen flex flex-col">
+
+  <!-- Confetti Container -->
+  <div id="confettiContainer" class="no-print"></div>
+
+  <!-- Top Broadcast Header -->
+  <header class="border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-md sticky top-0 z-30 no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center shadow-lg shadow-emerald-950/60 border border-emerald-400/30">
+          <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" fill="currentColor" fill-opacity="0.25"/>
+            <path d="M9.5 14.5 5 4l5.5 2.5L12 3l1.5 3.5L19 4l-4.5 10.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M7.5 9.5h9" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 id="headerTitle" class="text-lg sm:text-xl font-extrabold tracking-tight text-white">
+              Men's Doubles — Group Lottery
+            </h1>
+            <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              LIVE STAGE
+            </span>
+          </div>
+          <p id="headerSubtitle" class="text-xs text-slate-400">
+            Official Group Stage Allocation • Top 2 per group advance to Knockout Stage
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="toggleOrganizerBtn" type="button"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700/80 transition cursor-pointer">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span>Organizer Setup</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Collapsible Organizer Setup Drawer (Hidden on Stage when ready) -->
+    <div id="organizerDrawer" class="border-t border-slate-800 bg-slate-900/95 backdrop-blur-xl">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-4">
+        
+        <!-- Row 1: One-Click Tournament Presets & Sample Downloads -->
+        <div class="bg-slate-950/75 border border-slate-800 rounded-2xl p-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">
+              1. Quick Tournament Presets & Sample .TXT Files
+            </span>
+            <div class="flex flex-wrap items-center gap-3 text-[11px]">
+              <button id="downloadMixedTxtBtn" type="button"
+                class="font-semibold text-amber-400 hover:text-amber-300 underline underline-offset-2 cursor-pointer">
+                ⬇ Download mixed_doubles.txt
+              </button>
+              <button id="downloadMensTxtBtn" type="button"
+                class="font-semibold text-sky-400 hover:text-sky-300 underline underline-offset-2 cursor-pointer">
+                ⬇ Download mens_doubles.txt
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+            <button id="presetMixed4Btn" type="button"
+              class="px-3.5 py-2.5 rounded-xl text-xs bg-slate-900 hover:bg-emerald-600/20 text-slate-200 hover:text-emerald-300 border border-slate-700 hover:border-emerald-500/50 transition text-left cursor-pointer">
+              <div class="font-bold text-sm">Mixed Doubles (13 Teams)</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">4 Groups • 4-3-3-3 Format</div>
+            </button>
+
+            <button id="presetMens4Btn" type="button"
+              class="px-3.5 py-2.5 rounded-xl text-xs bg-slate-900 hover:bg-emerald-600/20 text-slate-200 hover:text-emerald-300 border border-slate-700 hover:border-emerald-500/50 transition text-left cursor-pointer">
+              <div class="font-bold text-sm">Men's Doubles — 4 Groups (22 Teams)</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">4 Groups • 6-6-5-5 Format</div>
+            </button>
+
+            <button id="presetMens8Btn" type="button"
+              class="px-3.5 py-2.5 rounded-xl text-xs bg-slate-900 hover:bg-emerald-600/20 text-slate-200 hover:text-emerald-300 border border-emerald-500/40 transition text-left cursor-pointer">
+              <div class="font-bold text-sm text-emerald-300">Men's Doubles — 8 Groups (22 Teams)</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">8 Groups • 3-3-3-3-3-3-2-2 (3×6 & 2×2)</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Row 2: TXT Upload / Editable Roster + Flexible Group & Capacity Configurator -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          
+          <!-- Left 6 Cols: Upload .TXT or Edit Roster Lines -->
+          <div class="lg:col-span-6 bg-slate-950/75 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between gap-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                2. Upload .TXT File or Edit Roster
+              </span>
+              <span class="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-medium">
+                Privacy Lock: Weights Hidden on Stage
+              </span>
+            </div>
+
+            <!-- Drag & Drop / File Picker -->
+            <label id="dropZoneLabel" for="txtFileInput"
+              class="flex items-center justify-between gap-3 w-full px-3.5 py-2.5 border-2 border-dashed border-slate-700 hover:border-emerald-500/70 rounded-xl cursor-pointer bg-slate-900/70 hover:bg-slate-900 transition">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <svg class="w-5 h-5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                <div class="truncate">
+                  <div id="fileNameLabel" class="text-xs font-bold text-slate-200 truncate">
+                    Drop .txt / .tsv / .csv file here or click to browse
+                  </div>
+                  <div class="text-[11px] text-slate-400 truncate">
+                    Format: Player1 [Tab] Skill1 [Tab] Player2 [Tab] Skill2
+                  </div>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-[11px] font-bold text-emerald-400 shrink-0">
+                Browse
+              </span>
+              <input id="txtFileInput" type="file" accept=".txt,.tsv,.csv,text/plain" class="hidden" />
+            </label>
+
+            <!-- Live Editable Roster Textarea -->
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label for="rosterTextarea" class="text-[11px] font-semibold text-slate-400">
+                  Raw Roster Data (Organizer Only — Editable):
+                </label>
+                <span id="parsedTeamCountBadge" class="text-[11px] font-bold text-emerald-400">
+                  22 Teams Parsed
+                </span>
+              </div>
+              <textarea id="rosterTextarea" rows="5" spellcheck="false"
+                class="w-full rounded-xl bg-slate-900 border border-slate-700 focus:border-emerald-500 focus:outline-none p-2.5 text-xs font-mono text-slate-200 leading-relaxed"
+                placeholder="Player1&#9;3&#9;Player2&#9;2"></textarea>
+            </div>
+          </div>
+
+          <!-- Right 6 Cols: Flexible Groups & Teams-Per-Group Controls -->
+          <div class="lg:col-span-6 bg-slate-950/75 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between gap-3">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                  3. Groups & Teams-Per-Group Setup
+                </span>
+                <span id="capacityValidationBadge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                  Slots: 22 / 22 Teams
+                </span>
+              </div>
+
+              <!-- Number of Groups & Distribution Mode -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label for="groupCountSelect" class="block text-[11px] font-semibold text-slate-400 mb-1">
+                    Number of Groups (2 – 12)
+                  </label>
+                  <select id="groupCountSelect"
+                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
+                    <option value="2">2 Groups (A – B)</option>
+                    <option value="3">3 Groups (A – C)</option>
+                    <option value="4">4 Groups (A – D)</option>
+                    <option value="5">5 Groups (A – E)</option>
+                    <option value="6">6 Groups (A – F)</option>
+                    <option value="7">7 Groups (A – G)</option>
+                    <option value="8" selected>8 Groups (A – H)</option>
+                    <option value="9">9 Groups (A – I)</option>
+                    <option value="10">10 Groups (A – J)</option>
+                    <option value="11">11 Groups (A – K)</option>
+                    <option value="12">12 Groups (A – L)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label for="capacityModeSelect" class="block text-[11px] font-semibold text-slate-400 mb-1">
+                    Teams Per Group Mode
+                  </label>
+                  <select id="capacityModeSelect"
+                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
+                    <option value="auto" selected>Auto-Balance Evenly</option>
+                    <option value="custom">Custom Teams Per Group</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Per-Group Capacity Inputs (Editable in Custom mode, live preview in Auto mode) -->
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-[11px] font-semibold text-slate-400">
+                    Group Slot Capacities (<span id="distributionPatternText" class="text-emerald-400 font-bold">3-3-3-3-3-3-2-2</span>):
+                  </span>
+                  <button id="fillEvenlyHelperBtn" type="button"
+                    class="text-[11px] text-sky-400 hover:text-sky-300 font-semibold cursor-pointer">
+                    Re-balance Evenly
+                  </button>
+                </div>
+                <div id="groupCapacityInputsGrid" class="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                  <!-- Individual Group A, B, C... number inputs rendered here -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Apply & Hide Setup Buttons -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+              <button id="applySetupBtn" type="button"
+                class="w-full py-2.5 px-4 rounded-xl text-xs font-extrabold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition cursor-pointer">
+                Apply Roster & Load Drum
+              </button>
+              <button id="hideSetupBtn" type="button"
+                class="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer">
+                Hide Setup for Public View
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Inline Notification Banner -->
+  <div id="toastBanner" class="hidden max-w-4xl mx-auto mt-4 px-4 w-full no-print">
+    <div id="toastInner" class="rounded-xl px-4 py-3 text-sm font-medium flex items-center justify-between border shadow-lg">
+      <span id="toastMessage"></span>
+      <button id="closeToastBtn" type="button" class="ml-4 text-xs font-bold opacity-75 hover:opacity-100 cursor-pointer">✕</button>
+    </div>
+  </div>
+
+  <!-- Main Public Broadcast Stage -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Live Lottery Stage & Controls -->
+    <section class="bg-slate-900/85 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl relative overflow-hidden no-print">
+      <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+        
+        <!-- Left: Live Spotlight Reveal Card -->
+        <div class="flex-1 w-full">
+          <div class="flex items-center gap-2 mb-2">
+            <span id="stageStatusPill" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/30">
+              Ready for Draw
+            </span>
+            <span id="progressCounterText" class="text-xs font-medium text-slate-400">
+              0 of 22 teams drawn
+            </span>
+          </div>
+
+          <div id="spotlightBox"
+            class="min-h-[118px] rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-slate-800 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 transition-all">
+            <div class="flex items-center gap-4 text-center sm:text-left">
+              <div id="spotlightIcon"
+                class="w-14 h-14 rounded-2xl bg-slate-800/90 border border-slate-700 flex items-center justify-center shrink-0 text-amber-400">
+                <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+              </div>
+              <div>
+                <div id="spotlightOverline" class="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Lottery Drum Loaded
+                </div>
+                <div id="spotlightTeamName" class="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5">
+                  Press "Draw Next Team" to Begin
+                </div>
+                <div id="spotlightSubline" class="text-xs text-slate-400 mt-1">
+                  Balanced group allocation • 8 Groups (3-3-3-3-3-3-2-2)
+                </div>
+              </div>
+            </div>
+
+            <!-- Assigned Group Destination Badge -->
+            <div id="spotlightDestination" class="hidden shrink-0 px-5 py-3 rounded-2xl bg-emerald-500/15 border border-emerald-400/40 text-center">
+              <div class="text-[10px] font-bold uppercase tracking-widest text-emerald-300">Assigned To</div>
+              <div id="spotlightGroupCode" class="text-2xl font-black text-white leading-tight">GROUP A</div>
+              <div id="spotlightSlotCode" class="text-xs font-semibold text-emerald-400">Slot A1</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Draw Action Controls -->
+        <div class="flex flex-col sm:flex-row lg:flex-col gap-2.5 w-full lg:w-64 shrink-0">
+          <button id="drawNextBtn" type="button"
+            class="w-full py-3.5 px-5 rounded-2xl font-extrabold text-sm bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-lg shadow-emerald-950/60 transition transform active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Draw Next Team</span>
+          </button>
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <button id="autoDrawBtn" type="button"
+              class="py-2.5 px-3 rounded-xl font-bold text-xs bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span id="autoDrawLabel">Auto-Draw</span>
+            </button>
+
+            <button id="resetDrawBtn" type="button"
+              class="py-2.5 px-3 rounded-xl font-bold text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center justify-center gap-1.5 cursor-pointer">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>Reset</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="mt-4 w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+        <div id="drawProgressBar" class="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 transition-all duration-300" style="width: 0%"></div>
+      </div>
+    </section>
+
+    <!-- Groups Grid -->
+    <section>
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <h2 class="text-base sm:text-lg font-extrabold text-white tracking-tight flex items-center gap-2">
+          <span>Official Tournament Groups</span>
+          <span id="groupStructureBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-slate-800 text-emerald-400 border border-slate-700">
+            8 Groups • 3-3-3-3-3-3-2-2
+          </span>
+        </h2>
+
+        <div id="postDrawActions" class="hidden flex flex-wrap items-center gap-2 no-print">
+          <button id="toggleScheduleBtn" type="button"
+            class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 transition cursor-pointer">
+            View Match Schedule
+          </button>
+          <button id="exportCsvBtn" type="button"
+            class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer">
+            Export Groups CSV
+          </button>
+          <button id="printBtn" type="button"
+            class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer">
+            Print Official Sheet
+          </button>
+        </div>
+      </div>
+
+      <div id="groupsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Group Cards Rendered Dynamically -->
+      </div>
+    </section>
+
+    <!-- Remaining Teams in Lottery Drum (Alphabetical order so seed order is never leaked) -->
+    <section id="remainingPoolSection" class="bg-slate-900/55 border border-slate-800/80 rounded-2xl p-4 sm:p-5 no-print">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <span>Teams Remaining in Lottery Drum</span>
+          <span id="remainingCountBadge" class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 font-extrabold">22</span>
+        </h3>
+        <span class="text-[11px] text-slate-500">Listed alphabetically</span>
+      </div>
+      <div id="remainingPoolGrid" class="flex flex-wrap gap-2">
+        <!-- Remaining team pills rendered here -->
+      </div>
+    </section>
+
+    <!-- Post-Draw Round-Robin Match Schedule & Knockout Path -->
+    <section id="scheduleSection" class="hidden space-y-5 pt-2">
+      <div class="bg-slate-900/85 border border-slate-800 rounded-3xl p-5 sm:p-6 print-card">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <h3 class="text-lg font-extrabold text-white print-text-dark">Group Stage Match Schedule</h3>
+            <p class="text-xs text-slate-400">
+              Top 2 teams from each group advance to the Knockout Stage (2-team groups play a seeding match)
+            </p>
+          </div>
+          <span id="totalMatchesBadge" class="px-3 py-1 rounded-xl text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+            20 Group Matches
+          </span>
+        </div>
+
+        <div id="scheduleGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <!-- Group match lists rendered here -->
+        </div>
+
+        <!-- Knockout Path -->
+        <div class="mt-6 pt-5 border-t border-slate-800">
+          <h4 class="text-sm font-extrabold uppercase tracking-wider text-emerald-400 mb-3">
+            Knockout Stage Bracket Path (Top 2 per Group)
+          </h4>
+          <div id="knockoutCrossovers" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="border-t border-slate-900 py-4 text-center text-xs text-slate-500 no-print">
+    Official Tournament Draw System • Skill-Balanced Group Lottery
+  </footer>
+
+  <script>
+    // =========================================================================
+    // 1. SAMPLE DATASETS (Mixed Doubles 13 Teams & Men's Doubles 22 Teams)
+    // =========================================================================
+    const SAMPLE_MIXED_DOUBLES = `Player1\tPlayer 1 Skill\tPlayer 2\tPlayer 2 Skill
+Jaya Kishore\t3\tMisha\t1
+Bharath Kuruvalli Srinivas\t2\tShreya Dave\t2
+Vivek Bhandari\t2\tNavya\t2
+Rohan Channakeshavaiah\t3\tNesara Vijay\t2
+Sindhushree\t1\tKishan Sawant\t3
+Muhammad Asim\t3\tAlena\t3
+Mayur chauhan\t4\tSina Wünsche\t4
+Sachumon Sabu\t3\tMarie Rasper\t3
+Venkat Medasani\t3\tNelima\t2
+Justine Johney\t3\tAnnet Biju\t3
+Jojas joseph\t3\tKaterina sieraia\t1
+Manjunath\t2\tShreeteja\t1
+Anuj D\t3\tSelina\t3`;
+
+    const SAMPLE_MENS_DOUBLES = `Category\tPlayer1\tPlayer 1 Skill\tPlayer 2\tPlayer 2 Skill
+Mens Doubles\tVenkat Medasani\t4\tKishore\t2
+Mens Doubles\tRishon\t2\tShamanth\t2
+Mens Doubles\tirfan ahmed\t1\tmohammad Asim\t1
+Mens Doubles\tJaya Kishore\t3\tRishith\t2
+Mens Doubles\tYogesh Sitaraman\t2\tBharath Kuruvalli Srinivas\t2
+Mens Doubles\tJojas Joseph\t3\tHarsha Gopal\t3
+Mens Doubles\tNinad Naik\t4\tChandrasekhar Moravaneni\t4
+Mens Doubles\tKishan Sawant\t3\tVipul Solanki\t3
+Mens Doubles\tJitesh Kumar\t3\tAnuj Deshmane\t3
+Mens Doubles\tVincent Le\t2\tDuc Ngoc Tran\t2
+Mens Doubles\tSrikanth Boddukuru\t3\tJoshi\t3
+Mens Doubles\tManas\t4\tSruthy\t1
+Mens Doubles\tVikram Rajput\t2\tRaj Savla\t2
+Mens Doubles\tSachumon Sabu\t3\tKaranam Rahul\t3
+Mens Doubles\tHrishikesh Pangavhane\t3\tManan Varia\t2
+Mens Doubles\tShakeel Ahmed\t3\tMohammed Wasim\t2
+Mens Doubles\tAchutha Vyas\t3\tSyed Waqar Kashif\t3
+Mens Doubles\tSaif Shaikh\t2\tSai Jadhav\t2
+Mens Doubles\tRajesh Ragi\t3\tArun Goriparthi\t4
+Mens Doubles\tVetrivel M S\t3\tAbhishek Kalam\t1
+Mens Doubles\tMithun Suresh\t2\tShyamjith\t3
+Mens Doubles\tBharath kumar reddy yerrapareddy\t3\tGowtham Chowdary Garapati\t4`;
+
+    // =========================================================================
+    // 2. APPLICATION STATE (Skill weights kept strictly internal)
+    // =========================================================================
+    const state = {
+      teams: [],              // { id, category, player1, player2, displayName, _weight }
+      groupCount: 8,          // 2 to 12 groups
+      groupSizes: [],         // e.g. [3, 3, 3, 3, 3, 3, 2, 2]
+      groups: [],             // Array of arrays holding assigned teams
+      drawQueue: [],          // Pre-planned balanced lottery sequence
+      drawnCount: 0,
+      isAnimating: false,
+      autoTimer: null,
+      lastDrawnInfo: null,
+      categoryTitle: "Men's Doubles"
+    };
+
+    // =========================================================================
+    // 3. PARSING & UTILITY FUNCTIONS
+    // =========================================================================
+    function showToast(message, type = 'info') {
+      const banner = document.getElementById('toastBanner');
+      const inner = document.getElementById('toastInner');
+      const msgEl = document.getElementById('toastMessage');
+
+      msgEl.textContent = message;
+      banner.classList.remove('hidden');
+
+      if (type === 'error') {
+        inner.className = 'rounded-xl px-4 py-3 text-sm font-medium flex items-center justify-between border shadow-lg bg-rose-950/90 border-rose-700 text-rose-200';
+      } else if (type === 'success') {
+        inner.className = 'rounded-xl px-4 py-3 text-sm font-medium flex items-center justify-between border shadow-lg bg-emerald-950/90 border-emerald-700 text-emerald-200';
+      } else {
+        inner.className = 'rounded-xl px-4 py-3 text-sm font-medium flex items-center justify-between border shadow-lg bg-slate-900/95 border-slate-700 text-slate-200';
+      }
+    }
+
+    function formatPlayerName(name) {
+      return name
+        .trim()
+        .replace(/\s+/g, ' ')
+        .split(' ')
+        .map(w => (w.length > 0 ? w[0].toUpperCase() + w.slice(1) : ''))
+        .join(' ');
+    }
+
+    /**
+     * Parses .txt / .tsv / .csv content supporting:
+     * Format A (4 cols): Player1 | Skill1 | Player2 | Skill2
+     * Format B (5 cols): Category | Player1 | Skill1 | Player2 | Skill2
+     */
+    function parseTeamsFromText(rawText) {
+      const lines = rawText
+        .split(/\r?\n/)
+        .map(l => l.trim())
+        .filter(l => l.length > 0 && !l.startsWith('#') && !l.startsWith('---'));
+
+      const parsed = [];
+      let detectedCategory = '';
+
+      lines.forEach((line, idx) => {
+        let parts = line.includes('\t')
+          ? line.split('\t')
+          : line.includes(',')
+            ? line.split(',')
+            : line.split(/\s{2,}/);
+
+        parts = parts.map(p => p.trim()).filter(p => p.length > 0);
+        if (parts.length < 4) return;
+
+        const lowerLine = line.toLowerCase();
+        if (lowerLine.includes('player 1') || lowerLine.includes('player1') || lowerLine.includes('skill')) {
+          return;
+        }
+
+        let category = '';
+        let p1 = '';
+        let s1 = 0;
+        let p2 = '';
+        let s2 = 0;
+
+        if (parts.length >= 5 && !isNaN(Number(parts[2])) && !isNaN(Number(parts[4]))) {
+          category = parts[0];
+          p1 = formatPlayerName(parts[1]);
+          s1 = parseFloat(parts[2]) || 0;
+          p2 = formatPlayerName(parts[3]);
+          s2 = parseFloat(parts[4]) || 0;
+          if (!detectedCategory && category) detectedCategory = category;
+        } else if (!isNaN(Number(parts[1])) && !isNaN(Number(parts[3]))) {
+          p1 = formatPlayerName(parts[0]);
+          s1 = parseFloat(parts[1]) || 0;
+          p2 = formatPlayerName(parts[2]);
+          s2 = parseFloat(parts[3]) || 0;
+        } else {
+          return;
+        }
+
+        if (p1 && p2) {
+          const prettyCat = category.toLowerCase() === 'mens doubles' ? "Men's Doubles" : category;
+          parsed.push({
+            id: `team_${idx}_${Math.random().toString(36).slice(2, 7)}`,
+            category: prettyCat,
+            player1: p1,
+            player2: p2,
+            displayName: `${p1} & ${p2}`,
+            // Internal weight ONLY — never rendered to the DOM
+            _weight: s1 + s2
+          });
+        }
+      });
+
+      const finalTitle = detectedCategory
+        ? detectedCategory.toLowerCase() === 'mens doubles'
+          ? "Men's Doubles"
+          : detectedCategory
+        : parsed.length === 13
+          ? 'Mixed Doubles'
+          : 'Badminton Doubles';
+
+      return { teams: parsed, categoryTitle: finalTitle };
+    }
+
+    /**
+     * Even distribution helper:
+     * 13 teams / 4 groups => [4, 3, 3, 3]
+     * 22 teams / 4 groups => [6, 6, 5, 5]
+     * 22 teams / 8 groups => [3, 3, 3, 3, 3, 3, 2, 2]
+     */
+    function computeEvenGroupSizes(totalTeams, numGroups) {
+      const base = Math.floor(totalTeams / numGroups);
+      const remainder = totalTeams % numGroups;
+      const sizes = [];
+      for (let i = 0; i < numGroups; i++) {
+        sizes.push(base + (i < remainder ? 1 : 0));
+      }
+      return sizes;
+    }
+
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    /**
+     * Skill-Balanced Snake-Draft Lottery Planner:
+     * 1. Sorts teams by internal skill weight descending (randomizing ties).
+     * 2. Uses a snake-draft order across groups (0..G-1, then G-1..0) while respecting
+     *    each group's exact target capacity (e.g. [3,3,3,3,3,3,2,2]).
+     * 3. Randomizes the live reveal sequence so the public draw feels genuinely unpredictable
+     *    while converging on balanced groups.
+     */
+    function buildBalancedSnakeLotteryPlan(teams, groupSizes) {
+      const numGroups = groupSizes.length;
+      const remainingCap = [...groupSizes];
+      const sorted = shuffleArray(teams).sort((a, b) => b._weight - a._weight);
+
+      const assignments = [];
+      let direction = 1; // 1 = forward (A->H), -1 = reverse (H->A)
+      let cursor = 0;
+
+      for (const team of sorted) {
+        // Find next group in snake direction that still has remaining slot capacity
+        let attempts = 0;
+        while (remainingCap[cursor] <= 0 && attempts < numGroups * 2) {
+          cursor += direction;
+          if (cursor >= numGroups) {
+            direction = -1;
+            cursor = numGroups - 1;
+          } else if (cursor < 0) {
+            direction = 1;
+            cursor = 0;
+          }
+          attempts++;
+        }
+
+        if (remainingCap[cursor] > 0) {
+          assignments.push({ team, groupIndex: cursor });
+          remainingCap[cursor]--;
+        }
+
+        // Advance snake cursor for next pick
+        cursor += direction;
+        if (cursor >= numGroups) {
+          direction = -1;
+          cursor = numGroups - 1;
+        } else if (cursor < 0) {
+          direction = 1;
+          cursor = 0;
+        }
+      }
+
+      // Shuffle reveal order so live lottery reveals teams unpredictably across groups
+      return shuffleArray(assignments);
+    }
+
+    // =========================================================================
+    // 4. ORGANIZER GROUP CAPACITY INPUTS & VALIDATION
+    // =========================================================================
+    function renderGroupCapacityInputs(sizes) {
+      const grid = document.getElementById('groupCapacityInputsGrid');
+      const mode = document.getElementById('capacityModeSelect').value;
+      grid.innerHTML = '';
+
+      sizes.forEach((cap, idx) => {
+        const letter = String.fromCharCode(65 + idx);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex items-center justify-between gap-1.5 bg-slate-900 border border-slate-700/90 rounded-xl px-2.5 py-1.5';
+        wrapper.innerHTML = `
+          <label for="capInput_${idx}" class="text-xs font-extrabold text-emerald-400">G${letter}</label>
+          <input id="capInput_${idx}" data-group-idx="${idx}" type="number" min="1" max="20" value="${cap}"
+            ${mode === 'auto' ? 'disabled' : ''}
+            class="w-11 bg-slate-950 border border-slate-700 rounded-lg px-1.5 py-0.5 text-center text-xs font-bold text-white focus:outline-none focus:border-emerald-500 disabled:opacity-60" />
+        `;
+        grid.appendChild(wrapper);
+      });
+
+      // Attach listeners for custom edits
+      grid.querySelectorAll('input[type="number"]').forEach(inp => {
+        inp.addEventListener('input', validateCapacityInputs);
+      });
+
+      validateCapacityInputs();
+    }
+
+    function readCurrentGroupSizesFromUI() {
+      const inputs = document.querySelectorAll('#groupCapacityInputsGrid input[type="number"]');
+      return Array.from(inputs).map(inp => Math.max(1, parseInt(inp.value, 10) || 1));
+    }
+
+    function validateCapacityInputs() {
+      const { teams } = parseTeamsFromText(document.getElementById('rosterTextarea').value);
+      document.getElementById('parsedTeamCountBadge').textContent = `${teams.length} Teams Parsed`;
+
+      const sizes = readCurrentGroupSizesFromUI();
+      const totalSlots = sizes.reduce((sum, n) => sum + n, 0);
+      const badge = document.getElementById('capacityValidationBadge');
+      const patternEl = document.getElementById('distributionPatternText');
+
+      patternEl.textContent = sizes.join('-');
+      badge.textContent = `Slots: ${totalSlots} / ${teams.length} Teams`;
+
+      if (totalSlots === teams.length && teams.length >= 2) {
+        badge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+        return true;
+      } else {
+        badge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40';
+        return false;
+      }
+    }
+
+    function syncGroupInputsWithRoster() {
+      const { teams } = parseTeamsFromText(document.getElementById('rosterTextarea').value);
+      const numGroups = parseInt(document.getElementById('groupCountSelect').value, 10) || 4;
+      const mode = document.getElementById('capacityModeSelect').value;
+
+      if (mode === 'auto') {
+        const evenSizes = computeEvenGroupSizes(Math.max(teams.length, numGroups), numGroups);
+        renderGroupCapacityInputs(evenSizes);
+      } else {
+        const current = readCurrentGroupSizesFromUI();
+        const next = [];
+        for (let i = 0; i < numGroups; i++) {
+          next.push(current[i] || Math.max(2, Math.floor((teams.length || 12) / numGroups)));
+        }
+        renderGroupCapacityInputs(next);
+      }
+    }
+
+    // =========================================================================
+    // 5. INITIALIZE & RESET TOURNAMENT DRAW
+    // =========================================================================
+    function initializeTournament(teams, categoryTitle, customSizes = null) {
+      stopAutoDraw();
+      state.teams = teams;
+      state.categoryTitle = categoryTitle;
+      state.groupCount = customSizes
+        ? customSizes.length
+        : parseInt(document.getElementById('groupCountSelect').value, 10) || 4;
+
+      state.groupSizes = customSizes || computeEvenGroupSizes(teams.length, state.groupCount);
+      state.drawQueue = buildBalancedSnakeLotteryPlan(state.teams, state.groupSizes);
+      state.groups = Array.from({ length: state.groupCount }, () => []);
+      state.drawnCount = 0;
+      state.isAnimating = false;
+      state.lastDrawnInfo = null;
+
+      const distStr = state.groupSizes.join('-');
+      document.getElementById('headerTitle').textContent = `${state.categoryTitle} — Group Lottery`;
+      document.getElementById('groupStructureBadge').textContent = `${state.groupCount} Groups • ${distStr}`;
+
+      // Reset spotlight UI (ZERO weights shown)
+      document.getElementById('stageStatusPill').textContent = 'Ready for Draw';
+      document.getElementById('stageStatusPill').className =
+        'px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/30';
+      document.getElementById('spotlightOverline').textContent = 'Lottery Drum Loaded';
+      document.getElementById('spotlightTeamName').textContent = 'Press "Draw Next Team" to Begin';
+      document.getElementById('spotlightSubline').textContent =
+        `${state.teams.length} teams ready • ${state.groupCount} Groups (${distStr})`;
+      document.getElementById('spotlightDestination').classList.add('hidden');
+      document.getElementById('spotlightIcon').classList.remove('animate-shuttle', 'text-emerald-400');
+      document.getElementById('spotlightIcon').classList.add('text-amber-400');
+
+      document.getElementById('postDrawActions').classList.add('hidden');
+      document.getElementById('scheduleSection').classList.add('hidden');
+      document.getElementById('drawNextBtn').disabled = state.teams.length === 0;
+      document.getElementById('autoDrawBtn').disabled = state.teams.length === 0;
+
+      renderAll();
+    }
+
+    // =========================================================================
+    // 6. LIVE LOTTERY DRAW EXECUTION & VISUAL CONFETTI
+    // =========================================================================
+    function launchConfettiBurst() {
+      const container = document.getElementById('confettiContainer');
+      const colors = ['#10b981', '#34d399', '#fbbf24', '#38bdf8', '#a78bfa', '#f43f5e'];
+      for (let i = 0; i < 65; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = `${Math.random() * 100}vw`;
+        piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDuration = `${1.8 + Math.random() * 1.8}s`;
+        piece.style.animationDelay = `${Math.random() * 0.35}s`;
+        container.appendChild(piece);
+        setTimeout(() => piece.remove(), 4000);
+      }
+    }
+
+    function drawNextTeam() {
+      if (state.isAnimating || state.drawnCount >= state.drawQueue.length) return;
+
+      state.isAnimating = true;
+      document.getElementById('drawNextBtn').disabled = true;
+
+      const nextEntry = state.drawQueue[state.drawnCount];
+      const remainingTeams = state.drawQueue.slice(state.drawnCount).map(item => item.team);
+
+      const iconEl = document.getElementById('spotlightIcon');
+      const overlineEl = document.getElementById('spotlightOverline');
+      const teamNameEl = document.getElementById('spotlightTeamName');
+      const sublineEl = document.getElementById('spotlightSubline');
+      const destEl = document.getElementById('spotlightDestination');
+
+      iconEl.classList.add('animate-shuttle');
+      destEl.classList.add('hidden');
+      overlineEl.textContent = 'Drawing from Drum...';
+      sublineEl.textContent = 'Shuffling remaining pairs...';
+
+      let ticks = 0;
+      const totalTicks = state.autoTimer ? 4 : 9;
+      const tickInterval = state.autoTimer ? 40 : 50;
+
+      const shuffleTimer = setInterval(() => {
+        const randomSample = remainingTeams[Math.floor(Math.random() * remainingTeams.length)];
+        teamNameEl.textContent = randomSample.displayName;
+        ticks++;
+
+        if (ticks >= totalTicks) {
+          clearInterval(shuffleTimer);
+          finalizeTeamReveal(nextEntry);
+        }
+      }, tickInterval);
+    }
+
+    function finalizeTeamReveal(entry) {
+      const { team, groupIndex } = entry;
+      const groupLetter = String.fromCharCode(65 + groupIndex);
+      const slotIndex = state.groups[groupIndex].length;
+      const slotCode = `${groupLetter}${slotIndex + 1}`;
+
+      state.groups[groupIndex].push(team);
+      state.drawnCount++;
+      state.lastDrawnInfo = { groupIndex, slotIndex, team };
+      state.isAnimating = false;
+
+      const iconEl = document.getElementById('spotlightIcon');
+      iconEl.classList.remove('animate-shuttle', 'text-amber-400');
+      iconEl.classList.add('text-emerald-400');
+
+      document.getElementById('spotlightOverline').textContent = `Draw #${state.drawnCount} Confirmed`;
+      const teamNameEl = document.getElementById('spotlightTeamName');
+      teamNameEl.textContent = team.displayName;
+      teamNameEl.classList.remove('animate-reveal');
+      void teamNameEl.offsetWidth;
+      teamNameEl.classList.add('animate-reveal');
+
+      document.getElementById('spotlightSubline').textContent =
+        team.category ? `${team.category} Division` : 'Official Group Allocation';
+
+      const destEl = document.getElementById('spotlightDestination');
+      destEl.classList.remove('hidden', 'animate-reveal');
+      void destEl.offsetWidth;
+      destEl.classList.add('animate-reveal');
+      document.getElementById('spotlightGroupCode').textContent = `GROUP ${groupLetter}`;
+      document.getElementById('spotlightSlotCode').textContent = `Slot ${slotCode}`;
+
+      const isComplete = state.drawnCount >= state.drawQueue.length;
+      if (isComplete) {
+        stopAutoDraw();
+        document.getElementById('drawNextBtn').disabled = true;
+        document.getElementById('autoDrawBtn').disabled = true;
+        document.getElementById('stageStatusPill').textContent = 'Draw Complete';
+        document.getElementById('stageStatusPill').className =
+          'px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+        document.getElementById('postDrawActions').classList.remove('hidden');
+        buildRoundRobinSchedule();
+        launchConfettiBurst();
+      } else {
+        document.getElementById('drawNextBtn').disabled = false;
+        document.getElementById('stageStatusPill').textContent = 'Draw In Progress';
+      }
+
+      renderAll();
+    }
+
+    function toggleAutoDraw() {
+      if (state.autoTimer) {
+        stopAutoDraw();
+        return;
+      }
+      if (state.drawnCount >= state.drawQueue.length) return;
+
+      document.getElementById('autoDrawLabel').textContent = 'Pause';
+      drawNextTeam();
+      state.autoTimer = setInterval(() => {
+        if (state.drawnCount >= state.drawQueue.length) {
+          stopAutoDraw();
+        } else if (!state.isAnimating) {
+          drawNextTeam();
+        }
+      }, 620);
+    }
+
+    function stopAutoDraw() {
+      if (state.autoTimer) {
+        clearInterval(state.autoTimer);
+        state.autoTimer = null;
+      }
+      document.getElementById('autoDrawLabel').textContent = 'Auto-Draw';
+    }
+
+    // =========================================================================
+    // 7. RENDERING GROUPS & REMAINING POOL (STRICTLY NO WEIGHTS)
+    // =========================================================================
+    function renderAll() {
+      const total = state.drawQueue.length;
+      const pct = total > 0 ? Math.round((state.drawnCount / total) * 100) : 0;
+
+      document.getElementById('progressCounterText').textContent =
+        `${state.drawnCount} of ${total} teams drawn`;
+      document.getElementById('drawProgressBar').style.width = `${pct}%`;
+
+      renderGroupCards();
+      renderRemainingPool();
+    }
+
+    function renderGroupCards() {
+      const grid = document.getElementById('groupsGrid');
+      grid.innerHTML = '';
+
+      if (state.groupCount === 2) {
+        grid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4';
+      } else if (state.groupCount === 3 || state.groupCount === 6) {
+        grid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4';
+      } else {
+        grid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4';
+      }
+
+      const accentColors = [
+        { badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40', header: 'from-emerald-950/80 to-slate-900' },
+        { badge: 'bg-sky-500/20 text-sky-300 border-sky-500/40', header: 'from-sky-950/80 to-slate-900' },
+        { badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40', header: 'from-amber-950/80 to-slate-900' },
+        { badge: 'bg-purple-500/20 text-purple-300 border-purple-500/40', header: 'from-purple-950/80 to-slate-900' },
+        { badge: 'bg-rose-500/20 text-rose-300 border-rose-500/40', header: 'from-rose-950/80 to-slate-900' },
+        { badge: 'bg-teal-500/20 text-teal-300 border-teal-500/40', header: 'from-teal-950/80 to-slate-900' },
+        { badge: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40', header: 'from-indigo-950/80 to-slate-900' },
+        { badge: 'bg-orange-500/20 text-orange-300 border-orange-500/40', header: 'from-orange-950/80 to-slate-900' }
+      ];
+
+      for (let gIdx = 0; gIdx < state.groupCount; gIdx++) {
+        const groupLetter = String.fromCharCode(65 + gIdx);
+        const capacity = state.groupSizes[gIdx] || 0;
+        const assignedTeams = state.groups[gIdx] || [];
+        const theme = accentColors[gIdx % accentColors.length];
+
+        const card = document.createElement('div');
+        card.className = 'bg-slate-900/85 border border-slate-800 rounded-2xl overflow-hidden shadow-xl flex flex-col print-card';
+
+        const header = document.createElement('div');
+        header.className = `px-4 py-3 bg-gradient-to-r ${theme.header} border-b border-slate-800 flex items-center justify-between`;
+        header.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-xl border ${theme.badge} font-black text-sm flex items-center justify-center">
+              ${groupLetter}
+            </span>
+            <div>
+              <h3 class="font-extrabold text-white text-sm tracking-tight print-text-dark">Group ${groupLetter}</h3>
+              <p class="text-[11px] text-slate-400">${capacity} ${capacity === 1 ? 'Team' : 'Teams'} • Top 2 Advance</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold text-slate-400">
+            ${assignedTeams.length}/${capacity}
+          </span>
+        `;
+        card.appendChild(header);
+
+        const list = document.createElement('div');
+        list.className = 'p-3 space-y-2 flex-1';
+
+        for (let sIdx = 0; sIdx < capacity; sIdx++) {
+          const slotCode = `${groupLetter}${sIdx + 1}`;
+          const team = assignedTeams[sIdx];
+          const isJustDrawn =
+            state.lastDrawnInfo &&
+            state.lastDrawnInfo.groupIndex === gIdx &&
+            state.lastDrawnInfo.slotIndex === sIdx;
+
+          const slotEl = document.createElement('div');
+
+          if (team) {
+            slotEl.className = `rounded-xl px-3 py-2 border transition-all flex items-center justify-between gap-2 ${
+              isJustDrawn
+                ? 'slot-newly-drawn border-amber-400 bg-amber-500/15'
+                : 'bg-slate-950/80 border-slate-800/90'
+            }`;
+            slotEl.innerHTML = `
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="text-[11px] font-extrabold px-1.5 py-0.5 rounded-md bg-slate-800 text-emerald-400 shrink-0">
+                  ${slotCode}
+                </span>
+                <div class="text-xs sm:text-sm font-bold text-white truncate print-text-dark" title="${team.displayName}">
+                  ${team.displayName}
+                </div>
+              </div>
+              ${isJustDrawn ? '<span class="text-[10px] font-black uppercase px-1.5 py-0.5 rounded-full bg-amber-400 text-slate-950 shrink-0">NEW</span>' : ''}
+            `;
+          } else {
+            slotEl.className = 'rounded-xl px-3 py-2 border border-dashed border-slate-800 bg-slate-950/30 flex items-center gap-2';
+            slotEl.innerHTML = `
+              <span class="text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-slate-900 text-slate-600">
+                ${slotCode}
+              </span>
+              <span class="text-xs text-slate-600 italic">Awaiting draw...</span>
+            `;
+          }
+
+          list.appendChild(slotEl);
+        }
+
+        card.appendChild(list);
+        grid.appendChild(card);
+      }
+    }
+
+    function renderRemainingPool() {
+      const remainingEntries = state.drawQueue.slice(state.drawnCount);
+      const section = document.getElementById('remainingPoolSection');
+      const badge = document.getElementById('remainingCountBadge');
+      const grid = document.getElementById('remainingPoolGrid');
+
+      badge.textContent = remainingEntries.length;
+
+      if (remainingEntries.length === 0) {
+        section.classList.add('hidden');
+        return;
+      }
+
+      section.classList.remove('hidden');
+
+      // Sort remaining teams alphabetically so seed/skill order is NEVER exposed
+      const alphabeticalTeams = remainingEntries
+        .map(e => e.team)
+        .sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+      grid.innerHTML = alphabeticalTeams
+        .map(
+          t => `
+          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-950/85 text-slate-300 border border-slate-800">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500/70"></span>
+            ${t.displayName}
+          </span>
+        `
+        )
+        .join('');
+    }
+
+    // =========================================================================
+    // 8. ROUND-ROBIN SCHEDULE & KNOCKOUT GENERATOR
+    // =========================================================================
+    function generateRoundRobinPairs(teams, groupLetter) {
+      if (teams.length < 2) return [];
+      const list = teams.map((t, idx) => ({
+        code: `${groupLetter}${idx + 1}`,
+        name: t.displayName
+      }));
+
+      if (list.length % 2 !== 0) {
+        list.push({ code: 'BYE', name: 'BYE' });
+      }
+
+      const n = list.length;
+      const rounds = n - 1;
+      const matches = [];
+      const arr = [...list];
+
+      for (let r = 0; r < rounds; r++) {
+        for (let i = 0; i < n / 2; i++) {
+          const home = arr[i];
+          const away = arr[n - 1 - i];
+          if (home.code !== 'BYE' && away.code !== 'BYE') {
+            matches.push({ round: r + 1, team1: home, team2: away });
+          }
+        }
+        const last = arr.pop();
+        arr.splice(1, 0, last);
+      }
+      return matches;
+    }
+
+    function buildRoundRobinSchedule() {
+      const scheduleGrid = document.getElementById('scheduleGrid');
+      scheduleGrid.innerHTML = '';
+      let totalMatches = 0;
+
+      for (let gIdx = 0; gIdx < state.groupCount; gIdx++) {
+        const groupLetter = String.fromCharCode(65 + gIdx);
+        const teams = state.groups[gIdx];
+        const matches = generateRoundRobinPairs(teams, groupLetter);
+        totalMatches += matches.length;
+
+        const isTwoTeamSeeding = teams.length === 2;
+        const card = document.createElement('div');
+        card.className = 'bg-slate-950/80 border border-slate-800 rounded-2xl p-4 print-card';
+        card.innerHTML = `
+          <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
+            <span class="font-extrabold text-sm text-emerald-400">Group ${groupLetter}</span>
+            <span class="text-[11px] font-semibold text-slate-400">
+              ${isTwoTeamSeeding ? '1 Seeding Match' : `${matches.length} Matches`}
+            </span>
+          </div>
+          <div class="space-y-2">
+            ${matches
+              .map(
+                (m, i) => `
+              <div class="flex items-center justify-between text-xs bg-slate-900/75 px-3 py-2 rounded-xl border border-slate-800/80 gap-2">
+                <span class="text-slate-500 font-bold shrink-0">M${i + 1}</span>
+                <span class="font-semibold text-slate-200 flex-1 truncate print-text-dark">
+                  <strong class="text-emerald-400">${m.team1.code}</strong> ${m.team1.name}
+                </span>
+                <span class="text-slate-500 font-black shrink-0">vs</span>
+                <span class="font-semibold text-slate-200 flex-1 text-right truncate print-text-dark">
+                  ${m.team2.name} <strong class="text-emerald-400">${m.team2.code}</strong>
+                </span>
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+        `;
+        scheduleGrid.appendChild(card);
+      }
+
+      document.getElementById('totalMatchesBadge').textContent = `${totalMatches} Group Matches`;
+
+      // Knockout Crossover Preview
+      const qfContainer = document.getElementById('knockoutCrossovers');
+      if (state.groupCount === 8) {
+        const r16 = [
+          { label: 'Round of 16 — M1', match: 'Group A Winner vs Group B Runner-Up' },
+          { label: 'Round of 16 — M2', match: 'Group C Winner vs Group D Runner-Up' },
+          { label: 'Round of 16 — M3', match: 'Group E Winner vs Group F Runner-Up' },
+          { label: 'Round of 16 — M4', match: 'Group G Winner vs Group H Runner-Up' },
+          { label: 'Round of 16 — M5', match: 'Group B Winner vs Group A Runner-Up' },
+          { label: 'Round of 16 — M6', match: 'Group D Winner vs Group C Runner-Up' },
+          { label: 'Round of 16 — M7', match: 'Group F Winner vs Group E Runner-Up' },
+          { label: 'Round of 16 — M8', match: 'Group H Winner vs Group G Runner-Up' }
+        ];
+        qfContainer.innerHTML = r16
+          .map(
+            q => `
+            <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-3 print-card">
+              <div class="text-[11px] font-bold text-amber-400 uppercase">${q.label}</div>
+              <div class="text-xs font-semibold text-slate-200 mt-1 print-text-dark">${q.match}</div>
+            </div>
+          `
+          )
+          .join('');
+      } else if (state.groupCount === 4) {
+        const qfs = [
+          { label: 'Quarter-Final 1', match: 'Group A Winner vs Group B Runner-Up' },
+          { label: 'Quarter-Final 2', match: 'Group C Winner vs Group D Runner-Up' },
+          { label: 'Quarter-Final 3', match: 'Group B Winner vs Group A Runner-Up' },
+          { label: 'Quarter-Final 4', match: 'Group D Winner vs Group C Runner-Up' }
+        ];
+        qfContainer.innerHTML = qfs
+          .map(
+            q => `
+            <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-3 print-card">
+              <div class="text-[11px] font-bold text-amber-400 uppercase">${q.label}</div>
+              <div class="text-xs font-semibold text-slate-200 mt-1 print-text-dark">${q.match}</div>
+            </div>
+          `
+          )
+          .join('');
+      } else {
+        qfContainer.innerHTML = `
+          <div class="col-span-full text-xs text-slate-400">
+            Top 2 teams from each of the ${state.groupCount} groups (${state.groupCount * 2} teams total) advance to the Knockout Stage.
+          </div>
+        `;
+      }
+    }
+
+    // =========================================================================
+    // 9. EXPORT CSV & DOWNLOAD SAMPLE .TXT FILES (NO WEIGHTS EXPORTED)
+    // =========================================================================
+    function exportGroupsCsv() {
+      const rows = [['Group', 'Slot', 'Team', 'Player 1', 'Player 2']];
+      for (let gIdx = 0; gIdx < state.groupCount; gIdx++) {
+        const groupLetter = String.fromCharCode(65 + gIdx);
+        state.groups[gIdx].forEach((team, sIdx) => {
+          rows.push([
+            `Group ${groupLetter}`,
+            `${groupLetter}${sIdx + 1}`,
+            `"${team.displayName}"`,
+            `"${team.player1}"`,
+            `"${team.player2}"`
+          ]);
+        });
+      }
+
+      const csvContent = rows.map(r => r.join(',')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${state.categoryTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_groups.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadTextFile(content, filename) {
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    // =========================================================================
+    // 10. EVENT LISTENERS & INITIALIZATION
+    // =========================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      const organizerDrawer = document.getElementById('organizerDrawer');
+      const rosterTextarea = document.getElementById('rosterTextarea');
+      const groupCountSelect = document.getElementById('groupCountSelect');
+      const capacityModeSelect = document.getElementById('capacityModeSelect');
+
+      document.getElementById('toggleOrganizerBtn').addEventListener('click', () => {
+        organizerDrawer.classList.toggle('hidden');
+      });
+      document.getElementById('hideSetupBtn').addEventListener('click', () => {
+        organizerDrawer.classList.add('hidden');
+      });
+      document.getElementById('closeToastBtn').addEventListener('click', () => {
+        document.getElementById('toastBanner').classList.add('hidden');
+      });
+
+      // Download Sample .TXT files
+      document.getElementById('downloadMixedTxtBtn').addEventListener('click', () => {
+        downloadTextFile(SAMPLE_MIXED_DOUBLES, 'mixed_doubles_13.txt');
+      });
+      document.getElementById('downloadMensTxtBtn').addEventListener('click', () => {
+        downloadTextFile(SAMPLE_MENS_DOUBLES, 'mens_doubles_22.txt');
+      });
+
+      // Helper to apply a preset cleanly
+      function loadPreset(rawTxt, fileName, numGroups, customSizes = null, toastMsg = '') {
+        rosterTextarea.value = rawTxt;
+        document.getElementById('fileNameLabel').textContent = fileName;
+        groupCountSelect.value = String(numGroups);
+        capacityModeSelect.value = customSizes ? 'custom' : 'auto';
+
+        const { teams, categoryTitle } = parseTeamsFromText(rawTxt);
+        const sizes = customSizes || computeEvenGroupSizes(teams.length, numGroups);
+        renderGroupCapacityInputs(sizes);
+        initializeTournament(teams, categoryTitle, sizes);
+        if (toastMsg) showToast(toastMsg, 'success');
+      }
+
+      document.getElementById('presetMixed4Btn').addEventListener('click', () => {
+        loadPreset(
+          SAMPLE_MIXED_DOUBLES,
+          'mixed_doubles_13.txt',
+          4,
+          [4, 3, 3, 3],
+          'Loaded Mixed Doubles (13 Teams • 4 Groups: 4-3-3-3).'
+        );
+      });
+
+      document.getElementById('presetMens4Btn').addEventListener('click', () => {
+        loadPreset(
+          SAMPLE_MENS_DOUBLES,
+          'mens_doubles_22.txt',
+          4,
+          [6, 6, 5, 5],
+          "Loaded Men's Doubles (22 Teams • 4 Groups: 6-6-5-5)."
+        );
+      });
+
+      document.getElementById('presetMens8Btn').addEventListener('click', () => {
+        loadPreset(
+          SAMPLE_MENS_DOUBLES,
+          'mens_doubles_22.txt',
+          8,
+          [3, 3, 3, 3, 3, 3, 2, 2],
+          "Loaded Men's Doubles (22 Teams • 8 Groups: 3-3-3-3-3-3-2-2)."
+        );
+      });
+
+      // File Upload & Drag-and-Drop
+      function handleUploadedFile(file) {
+        if (!file) return;
+        document.getElementById('fileNameLabel').textContent = file.name;
+        const reader = new FileReader();
+        reader.onload = evt => {
+          const text = evt.target.result;
+          rosterTextarea.value = text;
+          const { teams, categoryTitle } = parseTeamsFromText(text);
+          if (teams.length < 2) {
+            showToast('Could not parse at least 2 teams. Check tab/comma columns.', 'error');
+            return;
+          }
+          syncGroupInputsWithRoster();
+          const sizes = readCurrentGroupSizesFromUI();
+          initializeTournament(teams, categoryTitle, sizes);
+          showToast(`Loaded ${teams.length} teams from "${file.name}". Skill weights hidden.`, 'success');
+        };
+        reader.onerror = () => showToast('Failed to read file.', 'error');
+        reader.readAsText(file);
+      }
+
+      document.getElementById('txtFileInput').addEventListener('change', e => {
+        handleUploadedFile(e.target.files[0]);
+      });
+
+      const dropZone = document.getElementById('dropZoneLabel');
+      dropZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        dropZone.classList.add('border-emerald-400', 'bg-slate-900');
+      });
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-emerald-400', 'bg-slate-900');
+      });
+      dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropZone.classList.remove('border-emerald-400', 'bg-slate-900');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          handleUploadedFile(e.dataTransfer.files[0]);
+        }
+      });
+
+      // Live Roster Textarea & Group Controls
+      rosterTextarea.addEventListener('input', () => {
+        if (capacityModeSelect.value === 'auto') {
+          syncGroupInputsWithRoster();
+        } else {
+          validateCapacityInputs();
+        }
+      });
+
+      groupCountSelect.addEventListener('change', syncGroupInputsWithRoster);
+      capacityModeSelect.addEventListener('change', syncGroupInputsWithRoster);
+
+      document.getElementById('fillEvenlyHelperBtn').addEventListener('click', () => {
+        const { teams } = parseTeamsFromText(rosterTextarea.value);
+        const numGroups = parseInt(groupCountSelect.value, 10) || 4;
+        const evenSizes = computeEvenGroupSizes(Math.max(teams.length, numGroups), numGroups);
+        renderGroupCapacityInputs(evenSizes);
+      });
+
+      document.getElementById('applySetupBtn').addEventListener('click', () => {
+        const { teams, categoryTitle } = parseTeamsFromText(rosterTextarea.value);
+        if (teams.length < 2) {
+          showToast('Please enter or upload at least 2 valid teams.', 'error');
+          return;
+        }
+        const sizes = readCurrentGroupSizesFromUI();
+        const totalSlots = sizes.reduce((a, b) => a + b, 0);
+        if (totalSlots !== teams.length) {
+          showToast(
+            `Total group slots (${totalSlots}) must equal total teams (${teams.length}). Adjust group capacities or click "Re-balance Evenly".`,
+            'error'
+          );
+          return;
+        }
+        initializeTournament(teams, categoryTitle, sizes);
+        showToast(`Applied ${teams.length} teams across ${sizes.length} groups (${sizes.join('-')}).`, 'success');
+      });
+
+      // Draw Controls
+      document.getElementById('drawNextBtn').addEventListener('click', drawNextTeam);
+      document.getElementById('autoDrawBtn').addEventListener('click', toggleAutoDraw);
+      document.getElementById('resetDrawBtn').addEventListener('click', () => {
+        if (state.teams.length > 0) {
+          initializeTournament(state.teams, state.categoryTitle, state.groupSizes);
+          showToast('Lottery drum reshuffled and reset.', 'info');
+        }
+      });
+
+      // Post-Draw Actions
+      document.getElementById('toggleScheduleBtn').addEventListener('click', () => {
+        const sec = document.getElementById('scheduleSection');
+        sec.classList.toggle('hidden');
+        if (!sec.classList.contains('hidden')) {
+          sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+      document.getElementById('exportCsvBtn').addEventListener('click', exportGroupsCsv);
+      document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+      // Default Startup: Men's Doubles 8 Groups (3-3-3-3-3-3-2-2)
+      loadPreset(
+        SAMPLE_MENS_DOUBLES,
+        'mens_doubles_22.txt',
+        8,
+        [3, 3, 3, 3, 3, 3, 2, 2]
+      );
+    });
+  </script>
+</body>
+</html>
