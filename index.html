@@ -185,10 +185,16 @@
               <div class="text-[11px] text-slate-400 mt-0.5">4 Groups • 4-3-3-3 Format</div>
             </button>
 
+            <button id="presetMens4Btn" type="button"
+              class="px-3.5 py-2.5 rounded-xl text-xs bg-slate-900 hover:bg-emerald-600/20 text-slate-200 hover:text-emerald-300 border border-slate-700 hover:border-emerald-500/50 transition text-left cursor-pointer">
+              <div class="font-bold text-sm">Men's Doubles — 4 Groups (22 Teams)</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">4 Groups • 6-6-5-5 Format</div>
+            </button>
+
             <button id="presetMens8Btn" type="button"
               class="px-3.5 py-2.5 rounded-xl text-xs bg-slate-900 hover:bg-emerald-600/20 text-slate-200 hover:text-emerald-300 border border-emerald-500/40 transition text-left cursor-pointer">
-              <div class="font-bold text-sm text-emerald-300">Men's Doubles — 8 Groups (24 Teams)</div>
-              <div class="text-[11px] text-slate-400 mt-0.5">8 Groups • 3-3-3-3-3-3-3-3 (3×8 )</div>
+              <div class="font-bold text-sm text-emerald-300">Men's Doubles — 8 Groups (22 Teams)</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">8 Groups • 3-3-3-3-3-3-2-2 (3×6 & 2×2)</div>
             </button>
           </div>
         </div>
@@ -236,7 +242,7 @@
                   Raw Roster Data (Organizer Only — Editable):
                 </label>
                 <span id="parsedTeamCountBadge" class="text-[11px] font-bold text-emerald-400">
-                  24 Teams Parsed
+                  22 Teams Parsed
                 </span>
               </div>
               <textarea id="rosterTextarea" rows="5" spellcheck="false"
@@ -253,7 +259,7 @@
                   3. Groups & Teams-Per-Group Setup
                 </span>
                 <span id="capacityValidationBadge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                  Slots: 24 / 24 Teams
+                  Slots: 22 / 22 Teams
                 </span>
               </div>
 
@@ -348,7 +354,7 @@
               Ready for Draw
             </span>
             <span id="progressCounterText" class="text-xs font-medium text-slate-400">
-              0 of 24 teams drawn
+              0 of 22 teams drawn
             </span>
           </div>
 
@@ -456,7 +462,7 @@
       <div class="flex items-center justify-between mb-3">
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
           <span>Teams Remaining in Lottery Drum</span>
-          <span id="remainingCountBadge" class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 font-extrabold">24</span>
+          <span id="remainingCountBadge" class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 font-extrabold">22</span>
         </h3>
         <span class="text-[11px] text-slate-500">Listed alphabetically</span>
       </div>
@@ -504,7 +510,7 @@
 
   <script>
     // =========================================================================
-    // 1. SAMPLE DATASETS (Mixed Doubles 13 Teams & Men's Doubles 24 Teams)
+    // 1. SAMPLE DATASETS (Mixed Doubles 13 Teams & Men's Doubles 22 Teams)
     // =========================================================================
     const SAMPLE_MIXED_DOUBLES = `Player1\tPlayer 1 Skill\tPlayer 2\tPlayer 2 Skill
 Jaya Kishore\t3\tMisha\t1
@@ -669,8 +675,8 @@ Mens Doubles\tBharath kumar reddy yerrapareddy\t3\tGowtham Chowdary Garapati\t4`
     /**
      * Even distribution helper:
      * 13 teams / 4 groups => [4, 3, 3, 3]
-     * 24 teams / 4 groups => [6, 6, 5, 5]
-     * 24 teams / 8 groups => [3, 3, 3, 3, 3, 3, 2, 2]
+     * 22 teams / 4 groups => [6, 6, 5, 5]
+     * 22 teams / 8 groups => [3, 3, 3, 3, 3, 3, 2, 2]
      */
     function computeEvenGroupSizes(totalTeams, numGroups) {
       const base = Math.floor(totalTeams / numGroups);
@@ -1327,7 +1333,7 @@ Mens Doubles\tBharath kumar reddy yerrapareddy\t3\tGowtham Chowdary Garapati\t4`
         downloadTextFile(SAMPLE_MIXED_DOUBLES, 'mixed_doubles_13.txt');
       });
       document.getElementById('downloadMensTxtBtn').addEventListener('click', () => {
-        downloadTextFile(SAMPLE_MENS_DOUBLES, 'mens_doubles_24.txt');
+        downloadTextFile(SAMPLE_MENS_DOUBLES, 'mens_doubles_22.txt');
       });
 
       // Helper to apply a preset cleanly
@@ -1357,20 +1363,20 @@ Mens Doubles\tBharath kumar reddy yerrapareddy\t3\tGowtham Chowdary Garapati\t4`
       document.getElementById('presetMens4Btn').addEventListener('click', () => {
         loadPreset(
           SAMPLE_MENS_DOUBLES,
-          'mens_doubles_24.txt',
+          'mens_doubles_22.txt',
           4,
           [6, 6, 5, 5],
-          "Loaded Men's Doubles (24 Teams • 4 Groups: 6-6-5-5)."
+          "Loaded Men's Doubles (22 Teams • 4 Groups: 6-6-5-5)."
         );
       });
 
       document.getElementById('presetMens8Btn').addEventListener('click', () => {
         loadPreset(
           SAMPLE_MENS_DOUBLES,
-          'mens_doubles_24.txt',
+          'mens_doubles_22.txt',
           8,
           [3, 3, 3, 3, 3, 3, 2, 2],
-          "Loaded Men's Doubles (24 Teams • 8 Groups: 3-3-3-3-3-3-2-2)."
+          "Loaded Men's Doubles (22 Teams • 8 Groups: 3-3-3-3-3-3-2-2)."
         );
       });
 
@@ -1475,10 +1481,10 @@ Mens Doubles\tBharath kumar reddy yerrapareddy\t3\tGowtham Chowdary Garapati\t4`
       document.getElementById('exportCsvBtn').addEventListener('click', exportGroupsCsv);
       document.getElementById('printBtn').addEventListener('click', () => window.print());
 
-      // Default Startup: Men's Doubles 8 Groups (3-3-3-3-3-3-3-3)
+      // Default Startup: Men's Doubles 8 Groups (3-3-3-3-3-3-2-2)
       loadPreset(
         SAMPLE_MENS_DOUBLES,
-        'mens_doubles_24.txt',
+        'mens_doubles_22.txt',
         8,
         [3, 3, 3, 3, 3, 3, 2, 2]
       );
