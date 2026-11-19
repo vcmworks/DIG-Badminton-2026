@@ -75,6 +75,9 @@
             <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
               3 COURTS LIVE
             </span>
+            <span id="cloudSyncBadge" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800 text-slate-400 border border-slate-700">
+              <i class="fa-solid fa-cloud mr-1"></i>Connecting...
+            </span>
           </div>
           <p class="text-xs text-slate-400">24 Men's Doubles (09:00) · 15 Mixed Doubles (14:00)</p>
         </div>
@@ -728,6 +731,34 @@
           </button>
         </div>
       </div>
+
+      <!-- Method C: Copyable Google Apps Script Code -->
+      <details class="bg-stadium-950 border border-slate-800 rounded-xl p-4">
+        <summary class="cursor-pointer text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center justify-between">
+          <span><i class="fa-solid fa-code text-emerald-400 mr-1.5"></i>Google Apps Script Web App Template (Click to Expand)</span>
+          <span class="text-[11px] text-slate-500 font-normal">Paste in Extensions → Apps Script</span>
+        </summary>
+        <div class="mt-3 space-y-2">
+          <p class="text-xs text-slate-400">Create a Google Sheet with tabs <code class="text-emerald-300">Teams</code>, <code class="text-emerald-300">Schedule</code>, <code class="text-emerald-300">Plan</code>, <code class="text-emerald-300">Rules</code>, and <code class="text-emerald-300">RawJSON</code>, then deploy this script as a Web App (Execute as: Me, Access: Anyone):</p>
+          <pre id="appsScriptCodeBlock" class="p-3 rounded-xl bg-stadium-900 border border-slate-800 text-[11px] font-mono text-emerald-300 overflow-x-auto select-all">function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var rawSheet = ss.getSheetByName('RawJSON');
+  var payload = rawSheet ? rawSheet.getRange('A1').getValue() : '{}';
+  return ContentService.createTextOutput(payload || '{}').setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var data = JSON.parse(e.postData.contents);
+  var rawSheet = ss.getSheetByName('RawJSON') || ss.insertSheet('RawJSON');
+  rawSheet.getRange('A1').setValue(JSON.stringify(data));
+  return ContentService.createTextOutput(JSON.stringify({ status: 'ok' })).setMimeType(ContentService.MimeType.JSON);
+}</pre>
+          <button onclick="copyAppsScriptCode()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white">
+            <i class="fa-regular fa-copy mr-1"></i>Copy Apps Script
+          </button>
+        </div>
+      </details>
     </div>
   </div>
 
@@ -755,8 +786,22 @@
       onSnapshot
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'dig-bremen-badminton-2026';
-    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+    // Embedded DIG Bremen Badminton 2026 Firebase Configuration
+    const DEFAULT_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyDT-30cQ9WvyBcf1PpIP6QsMfxjahSCbtk",
+      authDomain: "digbadminton2026.firebaseapp.com",
+      projectId: "digbadminton2026",
+      storageBucket: "digbadminton2026.firebasestorage.app",
+      messagingSenderId: "953816857083",
+      appId: "1:953816857083:web:08ef42eb23425b49de335e",
+      measurementId: "G-0F1MXQ9L3B"
+    };
+
+    const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config)
+      ? JSON.parse(__firebase_config)
+      : DEFAULT_FIREBASE_CONFIG;
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'dig_bremen_2026';
 
     let fbApp = null;
     let fbAuth = null;
@@ -787,8 +832,23 @@
       onSnapshot
     };
 
+    function updateCloudBadge(status, label) {
+      const badge = document.getElementById('cloudSyncBadge');
+      if (!badge) return;
+      if (status === 'live') {
+        badge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+        badge.innerHTML = `<i class="fa-solid fa-cloud-check mr-1"></i>${label || 'Live Cloud Synced'}`;
+      } else {
+        badge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30';
+        badge.innerHTML = `<i class="fa-solid fa-cloud-slash mr-1"></i>${label || 'Offline / Check Rules'}`;
+      }
+    }
+
     async function initFirebaseSync() {
-      if (!fbAuth || !fbDb) return;
+      if (!fbAuth || !fbDb) {
+        updateCloudBadge('offline', 'Offline Mode');
+        return;
+      }
 
       try {
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -797,11 +857,11 @@
           await signInAnonymously(fbAuth);
         }
       } catch (err) {
-        console.warn('Initial auth fallback:', err);
+        console.warn('Initial anonymous auth note (public read still works if Firestore rules allow):', err);
       }
 
-      const stateDocRef = doc(fbDb, 'artifacts', appId, 'public', 'data', 'tournament', 'masterState');
-      const adminsDocRef = doc(fbDb, 'artifacts', appId, 'public', 'data', 'tournament', 'admins');
+      const stateDocRef = doc(fbDb, 'tournaments', 'dig_bremen_2026');
+      const adminsDocRef = doc(fbDb, 'tournaments', 'dig_bremen_2026_admins');
 
       // Listen for Admin allowlist changes
       onSnapshot(adminsDocRef, (snap) => {
@@ -815,6 +875,7 @@
 
       // Listen for live tournament state updates (real-time for all spectators)
       onSnapshot(stateDocRef, (snap) => {
+        updateCloudBadge('live', 'Live Cloud Synced');
         if (snap.exists()) {
           const remote = snap.data();
           if (remote.rosters) window.appState.rosters = remote.rosters;
@@ -828,17 +889,24 @@
         } else if (window.fbRuntime.isAdmin) {
           window.persistToFirestore();
         }
-      }, (err) => console.warn('Tournament state listener error:', err));
+      }, (err) => {
+        console.warn('Tournament state listener error:', err);
+        updateCloudBadge('offline', 'Firestore Rules Needed');
+      });
 
       // Track Auth state
       onAuthStateChanged(fbAuth, async (user) => {
         window.fbRuntime.currentUser = user;
         if (user && !user.isAnonymous && user.email) {
           const emailLower = user.email.toLowerCase();
-          const adminsSnap = await getDoc(adminsDocRef);
-          if (!adminsSnap.exists() || !(adminsSnap.data().emails || []).length) {
-            // First non-anonymous organizer who signs in becomes primary Admin automatically
-            await setDoc(adminsDocRef, { emails: [emailLower] }, { merge: true });
+          try {
+            const adminsSnap = await getDoc(adminsDocRef);
+            if (!adminsSnap.exists() || !(adminsSnap.data().emails || []).length) {
+              // First non-anonymous organizer who signs in becomes primary Admin automatically
+              await setDoc(adminsDocRef, { emails: [emailLower] }, { merge: true });
+            }
+          } catch (e) {
+            console.warn('Could not read/init admins doc:', e);
           }
         }
         window.evaluateAdminRole();
@@ -1031,8 +1099,8 @@
     window.persistToFirestore = async function () {
       if (!window.fbRuntime || !window.fbRuntime.db || !window.fbRuntime.isAdmin) return;
       try {
-        const { db, appId, doc, setDoc } = window.fbRuntime;
-        const ref = doc(db, 'artifacts', appId, 'public', 'data', 'tournament', 'masterState');
+        const { db, doc, setDoc } = window.fbRuntime;
+        const ref = doc(db, 'tournaments', 'dig_bremen_2026');
         await setDoc(ref, {
           rosters: appState.rosters,
           drawnSlots: appState.drawnSlots,
@@ -1045,6 +1113,7 @@
         }, { merge: true });
       } catch (e) {
         console.warn('Firestore save failed:', e);
+        showToast('Cloud save blocked — check Firestore write rules.', 'error');
       }
     };
 
@@ -1204,8 +1273,8 @@
       const em = inp.value.trim().toLowerCase();
       if (!em || !em.includes('@')) return;
       const updated = Array.from(new Set([...(window.fbRuntime.adminEmails || []), em]));
-      const { db, appId, doc, setDoc } = window.fbRuntime;
-      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tournament', 'admins'), { emails: updated }, { merge: true });
+      const { db, doc, setDoc } = window.fbRuntime;
+      await setDoc(doc(db, 'tournaments', 'dig_bremen_2026_admins'), { emails: updated }, { merge: true });
       inp.value = '';
       renderAdminEmailList();
       showToast(`Added ${em} as Tournament Admin`);
@@ -1213,8 +1282,8 @@
     async function removeAdminEmail(em) {
       if (!requireAdminAction()) return;
       const updated = (window.fbRuntime.adminEmails || []).filter(e => e !== em);
-      const { db, appId, doc, setDoc } = window.fbRuntime;
-      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tournament', 'admins'), { emails: updated }, { merge: true });
+      const { db, doc, setDoc } = window.fbRuntime;
+      await setDoc(doc(db, 'tournaments', 'dig_bremen_2026_admins'), { emails: updated }, { merge: true });
       renderAdminEmailList();
       showToast(`Removed ${em} from Admins`);
     }
@@ -2474,19 +2543,15 @@
       showToast(`Copied ${activeSheetTab} table — paste directly into Google Sheets!`);
     }
 
-    function downloadAllSheetsCSV() {
-      ['Teams', 'Schedule', 'Plan', 'Rules'].forEach(tab => {
-        selectSheetTab(tab);
-        const tsv = document.getElementById('sheetDataTextarea').value;
-        const csv = tsv.split('\n').map(line => line.split('\t').map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n');
-        const link = document.createElement('a');
-        link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-        link.download = `DIG_Bremen_2026_${tab}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      });
-      showToast('Downloaded Teams, Schedule, Plan & Rules CSVs for Google Sheets!');
+    function copyAppsScriptCode() {
+      const code = document.getElementById('appsScriptCodeBlock').textContent;
+      const temp = document.createElement('textarea');
+      temp.value = code;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand('copy');
+      document.body.removeChild(temp);
+      showToast('Copied Google Apps Script template!');
     }
 
     async function loadFromGoogleSheetUrl() {
