@@ -9,7 +9,7 @@
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <!-- Confetti -->
@@ -25,13 +25,16 @@
             court: {
               50: '#ecfdf5',
               100: '#d1fae5',
+              200: '#a7f3d0',
               500: '#10b981',
               600: '#059669',
               700: '#047857',
               800: '#065f46',
               900: '#064e3b',
+              950: '#022c22',
             },
             shuttle: {
+              300: '#fde047',
               400: '#facc15',
               500: '#eab308',
               600: '#ca8a04',
@@ -51,501 +54,642 @@
         linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
       background-size: 32px 32px;
     }
-    @keyframes revealPop {
-      0% { transform: scale(0.92) translateY(6px); opacity: 0; }
-      75% { transform: scale(1.02); opacity: 1; }
-      100% { transform: scale(1) translateY(0); opacity: 1; }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .animate-reveal {
-      animation: revealPop 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    .animate-in {
+      animation: fadeSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col justify-between selection:bg-court-600 selection:text-white">
 
-  <!-- Toast Banner -->
+  <!-- Toast Notification Banner -->
   <div id="toastBanner" class="fixed top-5 right-5 z-50 hidden max-w-md w-full px-4 sm:px-0 pointer-events-none">
-    <div id="toastCard" class="pointer-events-auto bg-court-700 text-white border border-court-500 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-reveal">
+    <div id="toastCard" class="pointer-events-auto bg-court-700 text-white border border-court-500 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in">
       <i id="toastIcon" class="fa-solid fa-circle-check text-shuttle-400 text-lg"></i>
       <span id="toastText" class="text-xs sm:text-sm font-semibold">Saved</span>
     </div>
   </div>
 
   <!-- ===================================================================== -->
-  <!-- TOP NAVIGATION HEADER                                                 -->
+  <!-- LANDING ACCESS GATE (VIEWER / SPECTATOR VS. ADMIN LOGIN)              -->
   <!-- ===================================================================== -->
-  <header class="bg-slate-900 text-white sticky top-0 z-40 border-b border-slate-800 shadow-lg">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 space-y-3">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <!-- Brand Identity -->
-        <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('lottery')">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-court-500 to-court-700 flex items-center justify-center text-white shadow-lg border border-court-400/30">
-            <i class="fa-solid fa-shuttlecock text-shuttle-400 text-lg"></i>
-          </div>
-          <div>
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="font-extrabold text-base sm:text-lg tracking-tight text-white">DIG BREMEN BADMINTON</span>
-              <span class="px-2 py-0.5 text-[11px] font-extrabold bg-shuttle-400 text-slate-950 rounded-md uppercase tracking-wider">2026</span>
-              <span id="sheetsStatusPill" class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
-                <i class="fa-solid fa-database mr-1 text-court-400"></i>Local Storage
-              </span>
-            </div>
-            <p class="text-[11px] text-slate-400">24 Men's Doubles (8 Groups) · 15 Mixed Doubles (4 Groups) · 3 Courts Parallel</p>
-          </div>
+  <div id="landingGateView" class="min-h-screen bg-gradient-to-br from-slate-950 via-court-950 to-slate-900 court-grid flex flex-col justify-between p-4 sm:p-8 text-white">
+    <!-- Top Mini Bar -->
+    <div class="max-w-5xl w-full mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-court-500 to-court-700 flex items-center justify-center shadow-lg border border-court-400/30">
+          <i class="fa-solid fa-shuttlecock text-shuttle-400 text-lg"></i>
         </div>
-
-        <!-- Admin & Google Sheets DB Controls -->
-        <div class="flex items-center gap-2">
-          <button onclick="openSheetsModal()"
-            class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 text-xs font-bold border border-slate-700 transition flex items-center gap-1.5">
-            <i class="fa-solid fa-table text-shuttle-400"></i>
-            <span>Sheets DB</span>
-          </button>
-
-          <span id="roleBadge" class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-800/80 text-slate-300 border border-slate-700">
-            <i class="fa-solid fa-eye mr-1 text-slate-400"></i>Spectator
-          </span>
-
-          <button id="btnOpenAdminModal" onclick="openAdminModal()"
-            class="px-3.5 py-2 rounded-xl bg-court-600 hover:bg-court-500 text-white text-xs font-extrabold shadow transition flex items-center gap-1.5">
-            <i class="fa-solid fa-key text-shuttle-400"></i>
-            <span>Admin Login</span>
-          </button>
-
-          <button id="btnLockAdmin" onclick="lockAdminMode()"
-            class="hidden px-3.5 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 text-xs font-bold border border-rose-500/40 transition flex items-center gap-1.5">
-            <i class="fa-solid fa-lock"></i>
-            <span>Lock Admin</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- 5 Primary Navigation Tabs -->
-      <nav class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
-        <button id="nav-lottery" onclick="switchTab('lottery')"
-          class="px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 bg-court-600 text-white shadow-sm">
-          <i class="fa-solid fa-shuffle"></i>
-          <span>1. Lottery Draw</span>
-        </button>
-        <button id="nav-teams" onclick="switchTab('teams')"
-          class="px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white">
-          <i class="fa-solid fa-users"></i>
-          <span>2. Teams Roster</span>
-        </button>
-        <button id="nav-schedule" onclick="switchTab('schedule')"
-          class="px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white">
-          <i class="fa-solid fa-table-columns"></i>
-          <span>3. 3-Court Schedule</span>
-        </button>
-        <button id="nav-leaderboard" onclick="switchTab('leaderboard')"
-          class="px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white">
-          <i class="fa-solid fa-trophy"></i>
-          <span>4. Leaderboard & Results</span>
-        </button>
-        <button id="nav-rules" onclick="switchTab('rules')"
-          class="col-span-2 sm:col-span-1 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white">
-          <i class="fa-solid fa-scale-balanced"></i>
-          <span>5. Plan & Rules</span>
-        </button>
-      </nav>
-    </div>
-  </header>
-
-  <!-- ===================================================================== -->
-  <!-- MAIN CONTENT WRAPPER                                                  -->
-  <!-- ===================================================================== -->
-  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
-
-    <!-- Compact Emerald Stadium Hero Banner -->
-    <section class="bg-gradient-to-br from-court-900 via-court-800 to-slate-900 rounded-2xl p-5 sm:p-7 text-white shadow-xl relative overflow-hidden court-grid border border-court-700/50">
-      <div class="absolute -right-12 -bottom-12 w-60 h-60 bg-shuttle-400/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-        <div class="max-w-2xl">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-court-950/60 border border-court-500/30 text-court-100 text-xs font-semibold mb-2.5">
-            <span class="w-2 h-2 rounded-full bg-shuttle-400 animate-pulse"></span>
-            <span>DIG Bremen Sports Hall • Live Google Sheets Sync</span>
-          </div>
-          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-            DIG Bremen Badminton Championship <span class="text-shuttle-400">2026</span>
-          </h1>
-          <p class="text-court-100/90 text-xs sm:text-sm mt-1.5 leading-relaxed">
-            Official group allocation lottery, 3-court parallel match schedule, live standings, and full event results.
-          </p>
-        </div>
-
-        <div class="grid grid-cols-3 gap-3 shrink-0">
-          <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-xl p-3 text-center">
-            <p class="text-xl sm:text-2xl font-extrabold text-shuttle-400">39</p>
-            <p class="text-[11px] text-court-100 font-medium">Total Teams</p>
-          </div>
-          <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-xl p-3 text-center">
-            <p id="heroCompletedMatches" class="text-xl sm:text-2xl font-extrabold text-white">0 / 67</p>
-            <p class="text-[11px] text-court-100 font-medium">Matches Played</p>
-          </div>
-          <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-xl p-3 text-center">
-            <p class="text-xl sm:text-2xl font-extrabold text-emerald-300">3</p>
-            <p class="text-[11px] text-court-100 font-medium">Parallel Courts</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- TAB 1: OFFICIAL LOTTERY DRAW (NO DEMO MODE + AUTO DRAW & SAVE)      -->
-    <!-- =================================================================== -->
-    <div id="tab-lottery" class="space-y-6">
-      <!-- Category & Lottery Header Card -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-extrabold uppercase tracking-wider text-court-700">Official Group Allocation</span>
-            <span id="lotteryLockedBadge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-              Awaiting Official Draw
-            </span>
-          </div>
-          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">Tournament Group Lottery Draw</h2>
-          <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Reveal teams one-by-one or auto-draw all balanced groups and save directly to Google Sheets & the 3-court schedule.
-          </p>
-        </div>
-
-        <!-- Category Toggle -->
-        <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 self-start lg:self-center">
-          <button id="btnLotteryCatMD" onclick="setLotteryCategory('MD')"
-            class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-court-600 text-white shadow-sm transition">
-            Men's Doubles (24 → A–H)
-          </button>
-          <button id="btnLotteryCatXD" onclick="setLotteryCategory('XD')"
-            class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition">
-            Mixed Doubles (15 → A–D)
-          </button>
+          <span class="font-extrabold text-base sm:text-lg tracking-tight text-white">DIG BREMEN BADMINTON</span>
+          <span class="ml-1.5 px-2 py-0.5 text-[11px] font-extrabold bg-shuttle-400 text-slate-950 rounded-md uppercase">2026</span>
         </div>
       </div>
+      <span id="gateSyncStatus" class="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-emerald-300 border border-white/15">
+        <i class="fa-solid fa-cloud-arrow-down mr-1.5"></i>Google Sheets Ready
+      </span>
+    </div>
 
-      <!-- Stage Spotlight & Action Buttons Card -->
-      <div class="bg-slate-900 text-white rounded-2xl p-6 shadow-xl border border-slate-800">
-        <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
-          <div class="flex-1 text-center lg:text-left space-y-2">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-court-900/80 border border-court-500/40 text-shuttle-400 text-xs font-extrabold uppercase tracking-wider">
-              <i class="fa-solid fa-shuttlecock"></i>
-              <span id="lotteryStatusTag">OFFICIAL DRAW READY</span>
+    <!-- Center Dual-Role Entry Cards -->
+    <div class="max-w-5xl w-full mx-auto my-8 space-y-8 animate-in">
+      <div class="text-center max-w-2xl mx-auto space-y-3">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-court-900/90 border border-court-500/40 text-shuttle-400 text-xs font-bold uppercase tracking-wider">
+          <span class="w-2 h-2 rounded-full bg-shuttle-400 animate-pulse"></span>
+          <span>DIG Bremen Sports Hall • Courts 1, 2 & 3 Parallel</span>
+        </div>
+        <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
+          DIG Bremen Badminton <span class="text-shuttle-400">2026</span>
+        </h1>
+        <p class="text-sm sm:text-base text-slate-300 leading-relaxed">
+          Choose your portal access below. Spectators can view live scores, standings, teams, and court schedules immediately. Organizers sign in with the Admin passcode to manage the lottery and enter match scores.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Card A: Viewer / Spectator Portal -->
+        <div class="bg-white text-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl border border-slate-200 flex flex-col justify-between space-y-6">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="px-3 py-1 rounded-full bg-court-50 text-court-700 border border-court-200 text-xs font-extrabold uppercase tracking-wider">
+                Public Access · Read-Only
+              </span>
+              <div class="w-11 h-11 rounded-xl bg-court-50 text-court-600 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-eye"></i>
+              </div>
             </div>
-            <div id="lotterySpotlightCard" class="min-h-[76px] flex flex-col justify-center">
-              <h3 id="lotterySpotlightTeam" class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                Ready for Official Group Draw
-              </h3>
-              <p id="lotterySpotlightSub" class="text-xs sm:text-sm font-medium text-emerald-300 mt-1">
-                24 Men's Doubles teams queued across 8 balanced groups (A–H · 3 teams per group)
+            <div>
+              <h2 class="text-2xl font-extrabold text-slate-900">Viewer &amp; Player Portal</h2>
+              <p class="text-xs sm:text-sm text-slate-500 mt-1">
+                No password required. Auto-refreshes live scores from Google Sheets every 20 seconds.
               </p>
             </div>
+            <ul class="space-y-2.5 text-xs sm:text-sm text-slate-700 pt-2 border-t border-slate-100">
+              <li class="flex items-center gap-2.5"><i class="fa-solid fa-circle-check text-court-600"></i><span>Live Leaderboard, Group Tables &amp; Knockout Brackets</span></li>
+              <li class="flex items-center gap-2.5"><i class="fa-solid fa-circle-check text-court-600"></i><span>3-Court Parallel Match Schedule (Courts 1, 2 &amp; 3)</span></li>
+              <li class="flex items-center gap-2.5"><i class="fa-solid fa-circle-check text-court-600"></i><span>Players &amp; Teams Roster (24 Men's · 15 Mixed)</span></li>
+              <li class="flex items-center gap-2.5"><i class="fa-solid fa-circle-check text-court-600"></i><span>Live Group Lottery Results &amp; Tournament Rules</span></li>
+            </ul>
           </div>
 
-          <!-- Admin Action Buttons -->
-          <div class="admin-only hidden flex flex-wrap items-center justify-center lg:justify-end gap-2.5 w-full lg:w-auto">
-            <button onclick="drawNextTeam()"
-              class="px-4 py-3 rounded-xl bg-court-600 hover:bg-court-500 text-white font-bold text-xs sm:text-sm shadow-lg transition active:scale-95 flex items-center gap-2">
-              <i class="fa-solid fa-wand-magic-sparkles text-shuttle-400"></i>
-              <span>Draw Next Team</span>
+          <div class="space-y-2.5 pt-2">
+            <button onclick="enterAsViewer('schedule')"
+              class="w-full py-3.5 px-5 rounded-xl bg-court-600 hover:bg-court-700 text-white font-extrabold text-sm shadow-lg shadow-court-600/25 transition flex items-center justify-center gap-2">
+              <span>Enter as Viewer (Live Schedule &amp; Scores)</span>
+              <i class="fa-solid fa-arrow-right"></i>
             </button>
-
-            <button onclick="autoDrawAll(false)"
-              class="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm border border-slate-700 transition active:scale-95 flex items-center gap-2">
-              <i class="fa-solid fa-bolt text-shuttle-400"></i>
-              <span>Auto Draw All</span>
-            </button>
-
-            <button onclick="autoDrawAllAndSaveToSheets()"
-              class="px-5 py-3 rounded-xl bg-shuttle-400 hover:bg-shuttle-500 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg transition active:scale-95 flex items-center gap-2">
-              <i class="fa-solid fa-cloud-arrow-up"></i>
-              <span>Auto Draw All & Save to Sheets</span>
-            </button>
-
-            <button onclick="resetLotteryCategory()"
-              class="px-3.5 py-3 rounded-xl bg-rose-950/60 hover:bg-rose-900/70 text-rose-300 font-bold text-xs border border-rose-800/40 transition flex items-center gap-1.5"
-              title="Reset & reshuffle draw for this division">
-              <i class="fa-solid fa-rotate-left"></i>
-              <span>Reset</span>
-            </button>
-          </div>
-
-          <!-- Spectator Read-Only Note -->
-          <div class="spectator-only flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-slate-300">
-            <i class="fa-solid fa-lock text-shuttle-400"></i>
-            <span>Spectator View · Admin login required to run & save the draw</span>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="enterAsViewer('leaderboard')"
+                class="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-trophy text-shuttle-600"></i>
+                <span>Leaderboard</span>
+              </button>
+              <button onclick="enterAsViewer('teams')"
+                class="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-users text-court-600"></i>
+                <span>Players &amp; Teams</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- Progress Bar -->
-        <div class="mt-5">
-          <div class="flex justify-between text-xs font-semibold text-slate-400 mb-1.5">
-            <span id="lotteryProgressLabel">0 of 24 teams drawn</span>
-            <span id="lotteryPercentLabel">0%</span>
+        <!-- Card B: Organizer Admin Login -->
+        <div class="bg-slate-900/95 text-white rounded-2xl p-6 sm:p-8 shadow-2xl border border-slate-700/80 flex flex-col justify-between space-y-6">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="px-3 py-1 rounded-full bg-shuttle-400/15 text-shuttle-400 border border-shuttle-400/30 text-xs font-extrabold uppercase tracking-wider">
+                Control Desk · Protected
+              </span>
+              <div class="w-11 h-11 rounded-xl bg-shuttle-400/15 text-shuttle-400 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-shield-halved"></i>
+              </div>
+            </div>
+            <div>
+              <h2 class="text-2xl font-extrabold text-white">Organizer Admin Login</h2>
+              <p class="text-xs sm:text-sm text-slate-400 mt-1">
+                Sign in with the tournament passcode to manage draws, scores, and Google Sheets sync.
+              </p>
+            </div>
+
+            <form id="landingAdminForm" onsubmit="handleLandingAdminLogin(event)" class="space-y-4 pt-2 border-t border-slate-800">
+              <div>
+                <label for="landingPasscodeInput" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                  Admin Passcode
+                </label>
+                <div class="relative">
+                  <input id="landingPasscodeInput" type="password" autocomplete="off" placeholder="Enter Admin Passcode"
+                    class="w-full pl-4 pr-11 py-3 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-shuttle-400" />
+                  <button type="button" onclick="togglePasscodeVisibility('landingPasscodeInput', 'landingEyeIcon')"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+                    title="Show or hide passcode">
+                    <i id="landingEyeIcon" class="fa-regular fa-eye"></i>
+                  </button>
+                </div>
+              </div>
+
+              <p id="landingLoginError" class="hidden text-xs font-semibold text-rose-300 bg-rose-950/70 border border-rose-800 px-3 py-2 rounded-xl">
+                Invalid passcode. Please check your organizer code and try again.
+              </p>
+
+              <button type="submit"
+                class="w-full py-3.5 px-5 rounded-xl bg-shuttle-400 hover:bg-shuttle-300 text-slate-950 font-extrabold text-sm shadow-lg transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-key"></i>
+                <span>Unlock Admin Control Desk</span>
+              </button>
+            </form>
           </div>
-          <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
-            <div id="lotteryProgressBar" class="h-full bg-gradient-to-r from-court-500 to-shuttle-400 transition-all duration-300" style="width: 0%"></div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Groups Grid -->
-      <div id="lotteryGroupsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Populated dynamically -->
-      </div>
-
-      <!-- Save Draw & Schedule Banner (Visible once draw is complete or in progress for Admins) -->
-      <div id="saveScheduleCtaCard" class="admin-only hidden bg-court-50 border border-court-200 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
-          <div class="w-11 h-11 rounded-xl bg-court-600 text-white flex items-center justify-center shrink-0 shadow">
-            <i class="fa-solid fa-calendar-check text-lg"></i>
-          </div>
-          <div>
-            <h4 class="font-extrabold text-slate-900 text-sm sm:text-base">Finalize Draw, Populate 3-Court Schedule & Sync Sheets</h4>
-            <p class="text-xs text-slate-600">Automatically completes any remaining draws, assigns all 3-court matches, and pushes `Teams`, `Schedule` & `Results` to Google Sheets.</p>
-          </div>
-        </div>
-        <button onclick="autoDrawAllAndSaveToSheets()"
-          class="w-full sm:w-auto px-5 py-3 rounded-xl bg-court-600 hover:bg-court-700 text-white font-extrabold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 shrink-0">
-          <i class="fa-solid fa-paper-plane"></i>
-          <span>Save Draw & Schedule to Sheets</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- =================================================================== -->
-    <!-- TAB 2: TEAMS ROSTER (NAMES ONLY — ZERO SKILL RATINGS)               -->
-    <!-- =================================================================== -->
-    <div id="tab-teams" class="hidden space-y-6">
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <span class="text-xs font-extrabold uppercase tracking-wider text-court-700">Official Entries</span>
-          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Players & Teams List</h2>
-          <p class="text-xs sm:text-sm text-slate-500">Complete roster of Men's Doubles (24 teams) and Mixed Doubles (15 teams).</p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
-            <button id="teamsFilterALL" onclick="setTeamsFilter('ALL')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-court-600 text-white">All (39)</button>
-            <button id="teamsFilterMD" onclick="setTeamsFilter('MD')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900">Men's (24)</button>
-            <button id="teamsFilterXD" onclick="setTeamsFilter('XD')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900">Mixed (15)</button>
-          </div>
-          <div class="relative flex-1 sm:w-56">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-            <input id="teamSearchInput" type="text" oninput="renderTeamsTab()" placeholder="Search player name..."
-              class="w-full pl-8 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-court-600" />
-          </div>
-        </div>
-      </div>
-
-      <div id="teamsContainer" class="space-y-6">
-        <!-- Populated dynamically -->
-      </div>
-    </div>
-
-    <!-- =================================================================== -->
-    <!-- TAB 3: 3-COURT PARALLEL SCHEDULE & FINAL SCORE ENTRY                -->
-    <!-- =================================================================== -->
-    <div id="tab-schedule" class="hidden space-y-6">
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-extrabold uppercase tracking-wider text-court-700">Courts 1, 2 & 3 Parallel</span>
-            <span id="scheduleStatusTag" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">
-              Slot Placeholders
-            </span>
-          </div>
-          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">3-Court Match Schedule & Final Score Entry</h2>
-          <p class="text-xs sm:text-sm text-slate-500">All 3 courts run in parallel per round. Admins click any match card to enter end-of-match final scores.</p>
-        </div>
-
-        <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 self-start lg:self-center">
-          <button id="schedCatMD" onclick="setScheduleCategory('MD')"
-            class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-court-600 text-white shadow-sm transition">
-            Men's Doubles (09:00 · 15 Rounds)
-          </button>
-          <button id="schedCatXD" onclick="setScheduleCategory('XD')"
-            class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition">
-            Mixed Doubles (14:00 · 11 Rounds)
-          </button>
-        </div>
-      </div>
-
-      <!-- Round-by-Round 3-Court Parallel Grid -->
-      <div id="scheduleRoundsContainer" class="space-y-4">
-        <!-- Populated dynamically -->
-      </div>
-    </div>
-
-    <!-- =================================================================== -->
-    <!-- TAB 4: LEADERBOARD & FULL EVENT RESULTS                             -->
-    <!-- =================================================================== -->
-    <div id="tab-leaderboard" class="hidden space-y-6">
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <span class="text-xs font-extrabold uppercase tracking-wider text-court-700">Live Standings & Results</span>
-          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Leaderboard, Group Tables & Full Match Results</h2>
-          <p class="text-xs sm:text-sm text-slate-500">Top 2 teams from every group advance automatically to the Knockout Rounds.</p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2">
-          <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
-            <button id="lbCatMD" onclick="setLeaderboardCategory('MD')"
-              class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-court-600 text-white shadow-sm transition">
-              Men's Doubles
-            </button>
-            <button id="lbCatXD" onclick="setLeaderboardCategory('XD')"
-              class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition">
-              Mixed Doubles
-            </button>
-          </div>
-          <button onclick="exportFullResultsCSV()"
-            class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5">
-            <i class="fa-solid fa-file-csv text-shuttle-400"></i>
-            <span>Export CSV</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Podium Summary Cards -->
-      <div id="podiumContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <!-- Populated dynamically -->
-      </div>
-
-      <!-- Group Standings Tables -->
-      <section class="space-y-3">
-        <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2">
-          <i class="fa-solid fa-ranking-star text-court-600"></i>
-          <span>Group Stage Standings (Top 2 Qualify)</span>
-        </h3>
-        <div id="leaderboardGroupsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Populated dynamically -->
-        </div>
-      </section>
-
-      <!-- Full Results Ledger -->
-      <section class="space-y-3">
-        <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2">
-          <i class="fa-solid fa-list-check text-court-600"></i>
-          <span>Complete Event Results Ledger</span>
-        </h3>
-        <div class="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left">
-              <thead>
-                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  <th class="py-3 px-4">Match</th>
-                  <th class="py-3 px-3">Round</th>
-                  <th class="py-3 px-3">Court</th>
-                  <th class="py-3 px-3">Stage</th>
-                  <th class="py-3 px-3">Matchup</th>
-                  <th class="py-3 px-3">Final Score</th>
-                  <th class="py-3 px-4">Winner</th>
-                </tr>
-              </thead>
-              <tbody id="fullResultsTableBody" class="divide-y divide-slate-100 text-xs sm:text-sm">
-                <!-- Populated dynamically -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <!-- =================================================================== -->
-    <!-- TAB 5: PLAN & OFFICIAL RULES                                        -->
-    <!-- =================================================================== -->
-    <div id="tab-rules" class="hidden space-y-6">
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <span class="text-xs font-extrabold uppercase tracking-wider text-court-700">DIG Bremen Handbook</span>
-          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Event Day Plan & Official Rules</h2>
-          <p class="text-xs sm:text-sm text-slate-500">Tournament timeline, BWF 21-point rally scoring, and group tie-breakers.</p>
-        </div>
-        <div class="admin-only hidden flex items-center gap-2">
-          <button onclick="savePlanRulesEdits()"
-            class="px-4 py-2.5 rounded-xl bg-court-600 hover:bg-court-700 text-white text-xs font-extrabold shadow-sm flex items-center gap-1.5">
-            <i class="fa-solid fa-floppy-disk"></i>
-            <span>Save & Sync Plan/Rules</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Event Day Plan -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 space-y-4">
-          <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
-            <i class="fa-regular fa-clock text-court-600"></i>
-            <span>Event Day Schedule Plan</span>
-          </h3>
-          <div id="planCardsContainer" class="space-y-3">
-            <!-- Populated dynamically -->
-          </div>
-        </div>
-
-        <!-- Official Tournament Rules -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 space-y-4">
-          <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
-            <i class="fa-solid fa-scale-balanced text-court-600"></i>
-            <span>Official Tournament Rules</span>
-          </h3>
-          <div id="rulesCardsContainer" class="space-y-3">
-            <!-- Populated dynamically -->
+          <div class="text-xs text-slate-400 bg-slate-950/70 border border-slate-800 rounded-xl p-3 flex items-start gap-2.5">
+            <i class="fa-solid fa-lock text-shuttle-400 mt-0.5"></i>
+            <span>Only unlocked Admins can update match scores, run the group lottery, or push changes to Google Sheets.</span>
           </div>
         </div>
       </div>
     </div>
 
-  </main>
-
-  <!-- Footer -->
-  <footer class="bg-white border-t border-slate-200 py-5 mt-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
-      <p class="font-bold text-slate-700">DIG Bremen Badminton Tournament 2026</p>
-      <p>Powered by Google Sheets &amp; Apps Script Real-Time Sync</p>
-    </div>
-  </footer>
-
-  <!-- ===================================================================== -->
-  <!-- MODAL 1: ADMIN PASSCODE LOGIN (DIG2026)                               -->
-  <!-- ===================================================================== -->
-  <div id="adminLoginModal" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-reveal">
-      <div class="bg-gradient-to-r from-court-800 to-slate-900 p-5 text-white flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <i class="fa-solid fa-key text-shuttle-400"></i>
-          <h3 class="font-extrabold text-base">Organizer Admin Login</h3>
-        </div>
-        <button onclick="closeAdminModal()" class="text-slate-300 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="p-6 space-y-4">
-        <p class="text-xs text-slate-600">Enter the Admin Passcode to unlock official lottery draws, Google Sheets sync, score entry, and rules editing.</p>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">Admin Passcode</label>
-          <input id="adminPasscodeInput" type="password" placeholder="Enter passcode (e.g. DIG2026)"
-            onkeydown="if(event.key==='Enter') submitAdminPasscode()"
-            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-court-600" />
-        </div>
-        <p id="adminPasscodeError" class="text-xs text-rose-600 font-semibold hidden">Incorrect passcode. Please try again.</p>
-        <div class="flex justify-end gap-2 pt-2">
-          <button onclick="closeAdminModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold">Cancel</button>
-          <button onclick="submitAdminPasscode()" class="px-5 py-2 rounded-xl bg-court-600 hover:bg-court-700 text-white text-xs font-extrabold">
-            Unlock Admin
-          </button>
-        </div>
-      </div>
+    <!-- Bottom Mini Footer -->
+    <div class="max-w-5xl w-full mx-auto text-center text-xs text-slate-400">
+      DIG Bremen Badminton Tournament 2026 • 24 Men's Doubles Teams &amp; 15 Mixed Doubles Teams
     </div>
   </div>
 
   <!-- ===================================================================== -->
-  <!-- MODAL 2: END-OF-MATCH FINAL SCORE ENTRY                               -->
+  <!-- MAIN PORTAL SHELL (HIDDEN UNTIL USER SELECTS VIEWER OR ADMIN)         -->
   <!-- ===================================================================== -->
-  <div id="scoreEntryModal" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-reveal">
+  <div id="mainPortalShell" class="hidden min-h-screen flex flex-col justify-between">
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="bg-slate-900 text-white sticky top-0 z-40 border-b border-slate-800 shadow-lg">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <!-- Brand / Back to Landing Gate -->
+          <div class="flex items-center gap-3">
+            <button onclick="returnToLandingGate()" title="Back to Role Selection Screen"
+              class="w-10 h-10 rounded-xl bg-gradient-to-br from-court-500 to-court-700 flex items-center justify-center text-white shadow-lg border border-court-400/30 hover:scale-105 transition">
+              <i class="fa-solid fa-shuttlecock text-shuttle-400 text-lg"></i>
+            </button>
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-extrabold text-base sm:text-lg tracking-tight text-white">DIG BREMEN BADMINTON</span>
+                <span class="px-2 py-0.5 text-[11px] font-extrabold bg-shuttle-400 text-slate-950 rounded-md uppercase">2026</span>
+                <span id="sheetsStatusPill" class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+                  <i class="fa-solid fa-cloud mr-1 text-court-400"></i>Synced
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-400">24 Men's Doubles (8 Groups) · 15 Mixed Doubles (4 Groups) · 3 Courts Parallel</p>
+            </div>
+          </div>
+
+          <!-- Role Status & Controls -->
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Viewer Mode Indicator + Quick Admin Login Button -->
+            <div id="headerViewerControls" class="flex items-center gap-2">
+              <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-emerald-300 border border-slate-700 flex items-center gap-1.5">
+                <i class="fa-solid fa-eye"></i>
+                <span>Viewer Mode (Read-Only)</span>
+              </span>
+              <button onclick="openHeaderAdminModal()"
+                class="px-3.5 py-2 rounded-xl bg-shuttle-400 hover:bg-shuttle-300 text-slate-950 text-xs font-extrabold shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-key"></i>
+                <span>Admin Login</span>
+              </button>
+            </div>
+
+            <!-- Admin Mode Indicator + Sheets Sync + Lock Button -->
+            <div id="headerAdminControls" class="hidden items-center gap-2">
+              <span class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-shuttle-400/15 text-shuttle-400 border border-shuttle-400/40 flex items-center gap-1.5">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Admin Unlocked</span>
+              </span>
+              <button onclick="openSheetsModal()"
+                class="px-3 py-2 rounded-xl bg-court-600 hover:bg-court-500 text-white text-xs font-bold shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-table"></i>
+                <span>Sheets Sync</span>
+              </button>
+              <button onclick="switchToViewerMode()"
+                class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-rose-950/80 text-slate-200 hover:text-rose-300 text-xs font-bold border border-slate-700 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-lock"></i>
+                <span>Exit Admin</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5 Navigation Tabs -->
+        <nav class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
+          <button id="nav-schedule" onclick="switchTab('schedule')"
+            class="px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 bg-court-600 text-white shadow-sm">
+            <i class="fa-solid fa-table-columns"></i>
+            <span>3-Court Schedule</span>
+          </button>
+          <button id="nav-leaderboard" onclick="switchTab('leaderboard')"
+            class="px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white">
+            <i class="fa-solid fa-trophy"></i>
+            <span>Leaderboard &amp; Standings</span>
+          </button>
+          <button id="nav-teams" onclick="switchTab('teams')"
+            class="px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white">
+            <i class="fa-solid fa-users"></i>
+            <span>Players &amp; Teams</span>
+          </button>
+          <button id="nav-lottery" onclick="switchTab('lottery')"
+            class="px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white">
+            <i class="fa-solid fa-shuffle"></i>
+            <span>Lottery Draw</span>
+          </button>
+          <button id="nav-rules" onclick="switchTab('rules')"
+            class="col-span-2 sm:col-span-1 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white">
+            <i class="fa-solid fa-scale-balanced"></i>
+            <span>Plan &amp; Rules</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+
+      <!-- Stadium Hero Banner -->
+      <section class="bg-gradient-to-br from-court-900 via-court-800 to-slate-900 rounded-2xl p-5 sm:p-7 text-white shadow-xl relative overflow-hidden court-grid border border-court-700/50">
+        <div class="absolute -right-12 -bottom-12 w-60 h-60 bg-shuttle-400/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div class="max-w-2xl">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-court-950/60 border border-court-500/30 text-court-100 text-xs font-semibold mb-2">
+              <span class="w-2 h-2 rounded-full bg-shuttle-400 animate-pulse"></span>
+              <span id="heroRoleBannerText">Viewer Mode • Live Read-Only Tournament Feed</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+              DIG Bremen Badminton Championship <span class="text-shuttle-400">2026</span>
+            </h1>
+            <p class="text-court-100/90 text-xs sm:text-sm mt-1.5 leading-relaxed">
+              Live 3-court match tracking, automatic group standings, and knockout bracket progression across Men's Doubles and Mixed Doubles.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3 shrink-0">
+            <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-xl p-3 text-center">
+              <p class="text-xl sm:text-2xl font-extrabold text-shuttle-400">39</p>
+              <p class="text-[11px] text-court-100 font-medium">Total Teams</p>
+            </div>
+            <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-xl p-3 text-center">
+              <p id="heroCompletedMatches" class="text-xl sm:text-2xl font-extrabold text-white">0 / 67</p>
+              <p class="text-[11px] text-court-100 font-medium">Completed</p>
+            </div>
+            <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-xl p-3 text-center">
+              <p class="text-xl sm:text-2xl font-extrabold text-emerald-300">3</p>
+              <p class="text-[11px] text-court-100 font-medium">Parallel Courts</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================= -->
+      <!-- TAB 1: 3-COURT SCHEDULE & LIVE SCORES                             -->
+      <!-- ================================================================= -->
+      <div id="tab-schedule" class="space-y-6 animate-in">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-xs font-extrabold uppercase tracking-wider text-court-700">Courts 1, 2 &amp; 3 Parallel</span>
+              <span id="scheduleLockStatusBadge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">
+                Read-Only Schedule
+              </span>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">3-Court Match Schedule &amp; Live Scores</h2>
+            <p id="scheduleSubDescription" class="text-xs sm:text-sm text-slate-500">
+              View live scores across Courts 1, 2, and 3. Only logged-in Admins can enter or edit final match scores.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+              <button id="schedCatMD" onclick="setScheduleCategory('MD')"
+                class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-court-600 text-white shadow-sm transition">
+                Men's Doubles (09:00)
+              </button>
+              <button id="schedCatXD" onclick="setScheduleCategory('XD')"
+                class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition">
+                Mixed Doubles (14:00)
+              </button>
+            </div>
+            <button onclick="loadFromAppsScript(false)"
+              class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5"
+              title="Refresh live scores from Google Sheets">
+              <i class="fa-solid fa-arrows-rotate text-shuttle-400"></i>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="scheduleRoundsContainer" class="space-y-4">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- TAB 2: LEADERBOARD & STANDINGS                                    -->
+      <!-- ================================================================= -->
+      <div id="tab-leaderboard" class="hidden space-y-6 animate-in">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-court-700">Live Standings &amp; Knockout Tracker</span>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Leaderboard, Group Standings &amp; Results</h2>
+            <p class="text-xs sm:text-sm text-slate-500">Top 2 teams from every group advance automatically to the Knockout Rounds.</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+              <button id="lbCatMD" onclick="setLeaderboardCategory('MD')"
+                class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-court-600 text-white shadow-sm transition">
+                Men's Doubles
+              </button>
+              <button id="lbCatXD" onclick="setLeaderboardCategory('XD')"
+                class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition">
+                Mixed Doubles
+              </button>
+            </div>
+            <button onclick="exportFullResultsCSV()"
+              class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-file-csv text-shuttle-400"></i>
+              <span>Export CSV</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Championship Podium Cards -->
+        <div id="podiumContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Group Standings Tables -->
+        <section class="space-y-3">
+          <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-ranking-star text-court-600"></i>
+            <span>Group Stage Standings (Top 2 Qualify)</span>
+          </h3>
+          <div id="leaderboardGroupsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Populated dynamically -->
+          </div>
+        </section>
+
+        <!-- Complete Results Ledger -->
+        <section class="space-y-3">
+          <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-court-600"></i>
+            <span>Complete Event Results Ledger</span>
+          </h3>
+          <div class="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    <th class="py-3 px-4">Match</th>
+                    <th class="py-3 px-3">Round</th>
+                    <th class="py-3 px-3">Court</th>
+                    <th class="py-3 px-3">Stage</th>
+                    <th class="py-3 px-3">Matchup</th>
+                    <th class="py-3 px-3">Final Score</th>
+                    <th class="py-3 px-4">Winner</th>
+                  </tr>
+                </thead>
+                <tbody id="fullResultsTableBody" class="divide-y divide-slate-100 text-xs sm:text-sm">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- TAB 3: PLAYERS & TEAMS (NAMES & GROUP SLOTS ONLY — NO RATINGS)    -->
+      <!-- ================================================================= -->
+      <div id="tab-teams" class="hidden space-y-6 animate-in">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-court-700">Official 2026 Roster</span>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Players &amp; Teams Directory</h2>
+            <p class="text-xs sm:text-sm text-slate-500">All 24 Men's Doubles pairs and 15 Mixed Doubles pairs with assigned Group &amp; Slot.</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+              <button id="teamsFilterALL" onclick="setTeamsFilter('ALL')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-court-600 text-white">All (39)</button>
+              <button id="teamsFilterMD" onclick="setTeamsFilter('MD')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900">Men's (24)</button>
+              <button id="teamsFilterXD" onclick="setTeamsFilter('XD')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900">Mixed (15)</button>
+            </div>
+            <div class="relative flex-1 sm:w-56">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input id="teamSearchInput" type="text" oninput="renderTeamsTab()" placeholder="Search player name..."
+                class="w-full pl-8 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-court-600" />
+            </div>
+          </div>
+        </div>
+
+        <div id="teamsContainer" class="space-y-6">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- TAB 4: LIVE LOTTERY DRAW (ADMIN RUNS, VIEWERS WATCH LIVE)         -->
+      <!-- ================================================================= -->
+      <div id="tab-lottery" class="hidden space-y-6 animate-in">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-extrabold uppercase tracking-wider text-court-700">Official Group Allocation</span>
+              <span id="lotteryLockedBadge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                Awaiting Official Draw
+              </span>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">Tournament Group Lottery Draw</h2>
+            <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+              Skill-balanced snake-draft group allocation. Viewers see groups update live; Admins control the draw and save to Google Sheets.
+            </p>
+          </div>
+
+          <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 self-start lg:self-center">
+            <button id="btnLotteryCatMD" onclick="setLotteryCategory('MD')"
+              class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-court-600 text-white shadow-sm transition">
+              Men's Doubles (24 → A–H)
+            </button>
+            <button id="btnLotteryCatXD" onclick="setLotteryCategory('XD')"
+              class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition">
+              Mixed Doubles (15 → A–D)
+            </button>
+          </div>
+        </div>
+
+        <!-- Stage Spotlight & Admin Action Console -->
+        <div class="bg-slate-900 text-white rounded-2xl p-6 shadow-xl border border-slate-800">
+          <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+            <div class="flex-1 text-center lg:text-left space-y-2">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-court-900/80 border border-court-500/40 text-shuttle-400 text-xs font-extrabold uppercase tracking-wider">
+                <i class="fa-solid fa-shuttlecock"></i>
+                <span id="lotteryStatusTag">OFFICIAL DRAW READY</span>
+              </div>
+              <div id="lotterySpotlightCard" class="min-h-[76px] flex flex-col justify-center">
+                <h3 id="lotterySpotlightTeam" class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                  Ready for Official Group Draw
+                </h3>
+                <p id="lotterySpotlightSub" class="text-xs sm:text-sm font-medium text-emerald-300 mt-1">
+                  24 Men's Doubles teams queued across 8 balanced groups (A–H · 3 teams per group)
+                </p>
+              </div>
+            </div>
+
+            <!-- Admin Controls -->
+            <div class="admin-only hidden flex flex-wrap items-center justify-center lg:justify-end gap-2.5 w-full lg:w-auto">
+              <button onclick="drawNextTeam()"
+                class="px-4 py-3 rounded-xl bg-court-600 hover:bg-court-500 text-white font-bold text-xs sm:text-sm shadow-lg transition active:scale-95 flex items-center gap-2">
+                <i class="fa-solid fa-wand-magic-sparkles text-shuttle-400"></i>
+                <span>Draw Next Team</span>
+              </button>
+
+              <button onclick="autoDrawAll(false)"
+                class="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm border border-slate-700 transition active:scale-95 flex items-center gap-2">
+                <i class="fa-solid fa-bolt text-shuttle-400"></i>
+                <span>Auto Draw All</span>
+              </button>
+
+              <button onclick="autoDrawAllAndSaveToSheets()"
+                class="px-5 py-3 rounded-xl bg-shuttle-400 hover:bg-shuttle-300 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg transition active:scale-95 flex items-center gap-2">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span>Auto Draw All &amp; Save to Sheets</span>
+              </button>
+
+              <button onclick="resetLotteryCategory()"
+                class="px-3.5 py-3 rounded-xl bg-rose-950/60 hover:bg-rose-900/70 text-rose-300 font-bold text-xs border border-rose-800/40 transition flex items-center gap-1.5"
+                title="Reset & reshuffle draw for this division">
+                <i class="fa-solid fa-rotate-left"></i>
+                <span>Reset</span>
+              </button>
+            </div>
+
+            <!-- Viewer Read-Only Banner -->
+            <div class="spectator-only flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-slate-300">
+              <i class="fa-solid fa-lock text-shuttle-400"></i>
+              <span>Viewer Mode · Live group allocations displayed below</span>
+            </div>
+          </div>
+
+          <div class="mt-5">
+            <div class="flex justify-between text-xs font-semibold text-slate-400 mb-1.5">
+              <span id="lotteryProgressLabel">0 of 24 teams drawn</span>
+              <span id="lotteryPercentLabel">0%</span>
+            </div>
+            <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+              <div id="lotteryProgressBar" class="h-full bg-gradient-to-r from-court-500 to-shuttle-400 transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="lotteryGroupsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- TAB 5: PLAN & OFFICIAL RULES                                      -->
+      <!-- ================================================================= -->
+      <div id="tab-rules" class="hidden space-y-6 animate-in">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-court-700">DIG Bremen Handbook</span>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Event Day Plan &amp; Official Rules</h2>
+            <p class="text-xs sm:text-sm text-slate-500">Tournament timeline, BWF 21-point rally scoring, and group tie-breakers.</p>
+          </div>
+          <div class="admin-only hidden flex items-center gap-2">
+            <button onclick="savePlanRulesEdits()"
+              class="px-4 py-2.5 rounded-xl bg-court-600 hover:bg-court-700 text-white text-xs font-extrabold shadow-sm flex items-center gap-1.5">
+              <i class="fa-solid fa-floppy-disk"></i>
+              <span>Save &amp; Sync Plan/Rules</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 space-y-4">
+            <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+              <i class="fa-regular fa-clock text-court-600"></i>
+              <span>Event Day Schedule Plan</span>
+            </h3>
+            <div id="planCardsContainer" class="space-y-3"></div>
+          </div>
+
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 space-y-4">
+            <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-scale-balanced text-court-600"></i>
+              <span>Official Tournament Rules</span>
+            </h3>
+            <div id="rulesCardsContainer" class="space-y-3"></div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-5 mt-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+        <p class="font-bold text-slate-700">DIG Bremen Badminton Tournament 2026</p>
+        <p>Powered by Google Sheets &amp; Apps Script Real-Time Sync</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 1: HEADER ADMIN PASSCODE LOGIN MODAL                            -->
+  <!-- ===================================================================== -->
+  <div id="headerAdminModal" class="fixed inset-0 z-50 hidden bg-slate-950/65 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in">
+      <div class="bg-gradient-to-r from-court-900 to-slate-900 p-5 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-key text-shuttle-400"></i>
+          <h3 class="font-extrabold text-base">Organizer Admin Login</h3>
+        </div>
+        <button onclick="closeHeaderAdminModal()" class="text-slate-300 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleModalAdminLogin(event)" class="p-6 space-y-4">
+        <p class="text-xs text-slate-600">Enter the Admin Passcode to unlock score updates, lottery execution, and Google Sheets sync.</p>
+        <div>
+          <label for="modalPasscodeInput" class="block text-xs font-bold text-slate-700 mb-1.5">Admin Passcode</label>
+          <div class="relative">
+            <input id="modalPasscodeInput" type="password" autocomplete="off" placeholder="Enter Admin Passcode"
+              class="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-court-600" />
+            <button type="button" onclick="togglePasscodeVisibility('modalPasscodeInput', 'modalEyeIcon')"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
+              <i id="modalEyeIcon" class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <p id="modalLoginError" class="hidden text-xs text-rose-600 font-semibold bg-rose-50 border border-rose-200 px-3 py-2 rounded-xl">
+          Incorrect passcode. Please try again.
+        </p>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeHeaderAdminModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-court-600 hover:bg-court-700 text-white text-xs font-extrabold">
+            Unlock Admin
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: ADMIN-ONLY END-OF-MATCH FINAL SCORE ENTRY                    -->
+  <!-- ===================================================================== -->
+  <div id="scoreEntryModal" class="fixed inset-0 z-50 hidden bg-slate-950/65 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in">
       <div class="bg-slate-900 text-white p-5 flex items-start justify-between">
         <div>
           <span id="scoreModalMeta" class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-court-600 text-white">
             MD-01 · Round 1 · Court 1
           </span>
-          <h3 id="scoreModalHeading" class="text-lg font-extrabold text-white mt-1.5">Final Match Score</h3>
+          <h3 id="scoreModalHeading" class="text-lg font-extrabold text-white mt-1.5">Enter Final Match Score</h3>
         </div>
         <button onclick="closeScoreModal()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
@@ -566,15 +710,15 @@
           </div>
           <div class="col-span-2">
             <input id="inpSet1A" type="number" min="0" max="30" placeholder="21"
-              class="modal-score-field w-full text-center py-2 rounded-lg bg-white border border-slate-300 text-slate-900 font-extrabold text-base focus:border-court-600 focus:outline-none" />
+              class="w-full text-center py-2 rounded-lg bg-white border border-slate-300 text-slate-900 font-extrabold text-base focus:border-court-600 focus:outline-none" />
           </div>
           <div class="col-span-2">
             <input id="inpSet2A" type="number" min="0" max="30" placeholder="21"
-              class="modal-score-field w-full text-center py-2 rounded-lg bg-white border border-slate-300 text-slate-900 font-extrabold text-base focus:border-court-600 focus:outline-none" />
+              class="w-full text-center py-2 rounded-lg bg-white border border-slate-300 text-slate-900 font-extrabold text-base focus:border-court-600 focus:outline-none" />
           </div>
           <div class="col-span-2">
             <input id="inpSet3A" type="number" min="0" max="30" placeholder="-"
-              class="modal-score-field w-full text-center py-2 rounded-lg bg-white border border-slate-300 text-slate-900 font-extrabold text-base focus:border-court-600 focus:outline-none" />
+              class="w-full text-center py-2 rounded-lg bg-white border border-slate-300 text-slate-900 font-extrabold text-base focus:border-court-600 focus:outline-none" />
           </div>
         </div>
 
@@ -586,21 +730,21 @@
           </div>
           <div class="col-span-2">
             <input id="inpSet1B" type="number" min="0" max="30" placeholder="15"
-              class="modal-score-field w-full text-center py-2 rounded-lg bg-white border border-slate-300 text-slate-900 font-extrabold text-base focus:border-court-600 focus:outline-none" />
+              class="w-full text-center py-2 rounded-lg bg-white border border-slate-300 text-slate-900 font-extrabold text-base focus:border-court-600 focus:outline-none" />
           </div>
           <div class="col-span-2">
             <input id="inpSet2B" type="number" min="0" max="30" placeholder="18"
-              class="modal-score-field w-full text-center py-2 rounded-lg bg-white border border-slate-300 text-slate-900 font-extrabold text-base focus:border-court-600 focus:outline-none" />
+              class="w-full text-center py-2 rounded-lg bg-white border border-slate-300 text-slate-900 font-extrabold text-base focus:border-court-600 focus:outline-none" />
           </div>
           <div class="col-span-2">
             <input id="inpSet3B" type="number" min="0" max="30" placeholder="-"
-              class="modal-score-field w-full text-center py-2 rounded-lg bg-white border border-slate-300 text-slate-900 font-extrabold text-base focus:border-court-600 focus:outline-none" />
+              class="w-full text-center py-2 rounded-lg bg-white border border-slate-300 text-slate-900 font-extrabold text-base focus:border-court-600 focus:outline-none" />
           </div>
         </div>
 
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold text-slate-600">Match Status:</span>
-          <select id="scoreModalStatus" class="modal-score-field bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:border-court-600">
+          <select id="scoreModalStatus" class="bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:border-court-600">
             <option value="COMPLETED">COMPLETED (Final Score)</option>
             <option value="ON_COURT">ON COURT (Playing Now)</option>
             <option value="UPCOMING">UPCOMING (Clear Score)</option>
@@ -609,19 +753,14 @@
 
         <p id="scoreModalError" class="text-xs text-rose-600 font-semibold hidden"></p>
 
-        <div id="scoreModalReadOnlyNote" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 flex items-center justify-between">
-          <span><i class="fa-solid fa-lock mr-1.5 text-amber-600"></i>Spectator view — Admin login required to record final scores.</span>
-          <button onclick="closeScoreModal(); openAdminModal();" class="underline font-extrabold text-court-700">Admin Login</button>
-        </div>
-
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
           <button onclick="closeScoreModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">
-            Close
+            Cancel
           </button>
-          <button id="btnSaveMatchScore" onclick="saveMatchScore()"
+          <button onclick="saveMatchScore()"
             class="px-5 py-2.5 rounded-xl bg-court-600 hover:bg-court-700 text-white text-xs font-extrabold shadow-sm flex items-center gap-1.5">
             <i class="fa-solid fa-check"></i>
-            <span>Save Final Score</span>
+            <span>Save Final Score &amp; Sync</span>
           </button>
         </div>
       </div>
@@ -629,117 +768,49 @@
   </div>
 
   <!-- ===================================================================== -->
-  <!-- MODAL 3: GOOGLE SHEETS DB SYNC & APPS SCRIPT TEMPLATE                 -->
+  <!-- MODAL 3: GOOGLE SHEETS DB SYNC MODAL (ADMIN)                          -->
   <!-- ===================================================================== -->
-  <div id="sheetsSyncModal" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden animate-reveal max-h-[90vh] flex flex-col">
-      <div class="bg-slate-900 text-white p-5 flex items-center justify-between shrink-0">
+  <div id="sheetsSyncModal" class="fixed inset-0 z-50 hidden bg-slate-950/65 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden animate-in">
+      <div class="bg-slate-900 text-white p-5 flex items-center justify-between">
         <div class="flex items-center gap-2.5">
           <div class="w-9 h-9 rounded-xl bg-court-600 flex items-center justify-center text-shuttle-400">
             <i class="fa-solid fa-table"></i>
           </div>
           <div>
-            <h3 class="font-extrabold text-base sm:text-lg">Google Sheets Database Sync</h3>
-            <p class="text-xs text-slate-400">Connects directly to your `Teams`, `Schedule`, `Results`, and `PlanRules` sheets.</p>
+            <h3 class="font-extrabold text-base">Google Sheets Database Sync</h3>
+            <p class="text-xs text-slate-400">Syncs `Teams`, `Schedule`, `Results` &amp; `PlanRules` with Google Sheets.</p>
           </div>
         </div>
         <button onclick="closeSheetsModal()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
 
-      <div class="p-6 space-y-5 overflow-y-auto">
-        <div class="space-y-2">
-          <label class="block text-xs font-bold text-slate-700">Google Apps Script Web App URL (<code class="text-court-700">.../exec</code>)</label>
-          <input id="appsScriptUrlInput" type="url" placeholder="https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"
-            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-court-600" />
-          <div class="flex flex-wrap gap-2 pt-1">
-            <button onclick="loadFromAppsScript()"
-              class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5">
-              <i class="fa-solid fa-cloud-arrow-down text-shuttle-400"></i>
-              <span>Pull from Google Sheets</span>
-            </button>
-            <button onclick="pushAllToAppsScript(false)"
-              class="px-4 py-2.5 rounded-xl bg-court-600 hover:bg-court-700 text-white text-xs font-extrabold flex items-center gap-1.5">
-              <i class="fa-solid fa-cloud-arrow-up"></i>
-              <span>Push All 4 Tabs to Sheets</span>
-            </button>
-          </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Apps Script Web App Endpoint (<code class="text-court-700">.../exec</code>)</label>
+          <input id="appsScriptUrlInput" type="url"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-court-600" />
         </div>
 
-        <!-- Copyable Google Apps Script Code -->
-        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-extrabold uppercase tracking-wider text-court-700">Google Apps Script Backend (`Code.gs`)</span>
-            <button onclick="copyAppsScriptTemplate()" class="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-bold text-white">
-              <i class="fa-regular fa-copy mr-1"></i>Copy Script
-            </button>
-          </div>
-          <p class="text-xs text-slate-600">
-            Create tabs <code class="font-bold text-slate-800">Teams</code>, <code class="font-bold text-slate-800">Schedule</code>, <code class="font-bold text-slate-800">Results</code>, and <code class="font-bold text-slate-800">PlanRules</code> in your Google Sheet, open <strong>Extensions → Apps Script</strong>, paste this code, and deploy as a Web App (Execute as: <strong>Me</strong>, Who has access: <strong>Anyone</strong>):
-          </p>
-          <pre id="appsScriptCodePre" class="p-3 rounded-xl bg-slate-900 text-[11px] font-mono text-emerald-300 overflow-x-auto select-all">const SHEET_NAMES = ['Teams', 'Schedule', 'Results', 'PlanRules'];
-const ADMIN_PASSCODE = 'DIG2026';
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <button onclick="loadFromAppsScript(false)"
+            class="py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2">
+            <i class="fa-solid fa-cloud-arrow-down text-shuttle-400"></i>
+            <span>Pull Latest from Sheets</span>
+          </button>
+          <button onclick="pushAllToAppsScript(false)"
+            class="py-3 px-4 rounded-xl bg-court-600 hover:bg-court-700 text-white text-xs font-extrabold flex items-center justify-center gap-2">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span>Push All 4 Tabs to Sheets</span>
+          </button>
+        </div>
 
-function ensureSheets_(ss) {
-  SHEET_NAMES.forEach((name) => {
-    if (!ss.getSheetByName(name)) ss.insertSheet(name);
-  });
-}
-
-function sheetToObjects_(sheet) {
-  const values = sheet.getDataRange().getValues();
-  if (values.length < 2) return [];
-  const headers = values[0].map((h) => String(h).trim());
-  return values.slice(1)
-    .filter((row) => row.some((cell) => cell !== ''))
-    .map((row) => {
-      const obj = {};
-      headers.forEach((h, idx) => { if (h) obj[h] = row[idx]; });
-      return obj;
-    });
-}
-
-function writeObjectsToSheet_(sheet, rows) {
-  sheet.clearContents();
-  if (!Array.isArray(rows) || rows.length === 0) return;
-  const headers = Object.keys(rows[0]);
-  const output = [headers];
-  rows.forEach((item) => {
-    output.push(headers.map((h) => (item[h] !== undefined && item[h] !== null ? item[h] : '')));
-  });
-  sheet.getRange(1, 1, output.length, headers.length).setValues(output);
-}
-
-function doGet(e) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  ensureSheets_(ss);
-  const requestedTab = e && e.parameter && e.parameter.sheet ? String(e.parameter.sheet) : 'ALL';
-  const payload = {};
-  if (requestedTab === 'ALL') {
-    SHEET_NAMES.forEach((name) => { payload[name] = sheetToObjects_(ss.getSheetByName(name)); });
-  } else if (SHEET_NAMES.includes(requestedTab)) {
-    payload[requestedTab] = sheetToObjects_(ss.getSheetByName(requestedTab));
-  }
-  return ContentService.createTextOutput(JSON.stringify({ ok: true, data: payload }))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function doPost(e) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  ensureSheets_(ss);
-  const body = e && e.postData && e.postData.contents ? JSON.parse(e.postData.contents) : {};
-  if (body.passcode !== ADMIN_PASSCODE) {
-    return ContentService.createTextOutput(JSON.stringify({ ok: false, error: 'Unauthorized passcode' }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-  const tables = body.tables || {};
-  SHEET_NAMES.forEach((name) => {
-    if (Array.isArray(tables[name])) {
-      writeObjectsToSheet_(ss.getSheetByName(name), tables[name]);
-    }
-  });
-  return ContentService.createTextOutput(JSON.stringify({ ok: true, savedAt: new Date().toISOString() }))
-    .setMimeType(ContentService.MimeType.JSON);
-}</pre>
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-600 space-y-1">
+          <p class="font-bold text-slate-800">Connected Google Sheet Tabs:</p>
+          <p>• <strong>Teams:</strong> 24 Men's Doubles &amp; 15 Mixed Doubles pairs + Group Slots</p>
+          <p>• <strong>Schedule:</strong> 3-Court Parallel Match Assignments (67 Matches)</p>
+          <p>• <strong>Results:</strong> End-of-Match Set Scores &amp; Winners</p>
+          <p>• <strong>PlanRules:</strong> Tournament Timeline &amp; Official Rules</p>
         </div>
       </div>
     </div>
@@ -750,19 +821,162 @@ function doPost(e) {
   <!-- ===================================================================== -->
   <script>
     // =========================================================================
-    // 1. ROSTER DATA (Skill ratings used strictly inside snake-draft logic)
+    // 1. CONFIGURATION & PRE-LOADED ROSTERS (Skill weights hidden from UI)
     // =========================================================================
     const ADMIN_PASSCODE = 'DIG2026';
     const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxTbFGcPa68qVBGl446I7qcsyMeYRqTqYUpNHu1rCfWlW_ARHgfjZznhJzaKUegP4p6sg/exec';
-    const STORAGE_KEY = 'dig_bremen_badminton_2026_official_v3';
+    const STORAGE_KEY = 'dig_bremen_badminton_2026_portal_v4';
+    const ROLE_STORAGE_KEY = 'dig_bremen_access_role_v4';
 
     const RAW_MD_ROSTER = [
-// ... existing code ... -->
-    // 3. STATE MANAGEMENT & LOCAL STORAGE
+      { id: 'MD-01', p1: 'Venkat Medasani', r1: 4, p2: 'Kishore', r2: 2 },
+      { id: 'MD-02', p1: 'Rishon', r1: 2, p2: 'Shamanth', r2: 2 },
+      { id: 'MD-03', p1: 'irfan ahmed', r1: 1, p2: 'mohammad Asim', r2: 1 },
+      { id: 'MD-04', p1: 'Jaya Kishore', r1: 3, p2: 'Rishith', r2: 2 },
+      { id: 'MD-05', p1: 'Yogesh Sitaraman', r1: 2, p2: 'Bharath Kuruvalli', r2: 2 },
+      { id: 'MD-06', p1: 'Jojas Joseph', r1: 3, p2: 'Harsha Gopal', r2: 3 },
+      { id: 'MD-07', p1: 'Ninad Naik', r1: 4, p2: 'Chandrasekhar', r2: 4 },
+      { id: 'MD-08', p1: 'Kishan Sawant', r1: 3, p2: 'Vipul Solanki', r2: 3 },
+      { id: 'MD-09', p1: 'Jitesh Kumar', r1: 3, p2: 'Anuj Deshmane', r2: 3 },
+      { id: 'MD-10', p1: 'Vincent Le', r1: 2, p2: 'Duc Ngoc Tran', r2: 2 },
+      { id: 'MD-11', p1: 'Srikanth', r1: 3, p2: 'Joshi', r2: 3 },
+      { id: 'MD-12', p1: 'Manas', r1: 4, p2: 'Jeffin', r2: 1 },
+      { id: 'MD-13', p1: 'Vikram Rajput', r1: 2, p2: 'Raj Savla', r2: 2 },
+      { id: 'MD-14', p1: 'Sachumon Sabu', r1: 3, p2: 'Karanam Rahul', r2: 3 },
+      { id: 'MD-15', p1: 'Hrishikesh', r1: 3, p2: 'Manan Varia', r2: 2 },
+      { id: 'MD-16', p1: 'Shakeel Ahmed', r1: 3, p2: 'Mohammed Wasim', r2: 2 },
+      { id: 'MD-17', p1: 'Achutha Vyas', r1: 3, p2: 'Syed Waqar Kashif', r2: 3 },
+      { id: 'MD-18', p1: 'Saif Shaikh', r1: 2, p2: 'Sai Jadhav', r2: 2 },
+      { id: 'MD-19', p1: 'Rajesh Ragi', r1: 3, p2: 'Arun Goriparthi', r2: 4 },
+      { id: 'MD-20', p1: 'Vetrivel M S', r1: 3, p2: 'Abhishek Kalam', r2: 1 },
+      { id: 'MD-21', p1: 'Mithun Suresh', r1: 2, p2: 'Shyamjith', r2: 3 },
+      { id: 'MD-22', p1: 'Bharath yerrapareddy', r1: 3, p2: 'Gowtham Garapati', r2: 4 },
+      { id: 'MD-23', p1: 'Manjunath', r1: 2, p2: 'Sunny', r2: 2 },
+      { id: 'MD-24', p1: 'Prayansh', r1: 1, p2: 'Yashneel', r2: 2 }
+    ];
+
+    const RAW_XD_ROSTER = [
+      { id: 'XD-01', p1: 'Jaya Kishore', r1: 3, p2: 'Misha', r2: 1 },
+      { id: 'XD-02', p1: 'Bharath Kuruvalli', r1: 2, p2: 'Shreya Dave', r2: 2 },
+      { id: 'XD-03', p1: 'Vivek Bhandari', r1: 2, p2: 'Navya', r2: 2 },
+      { id: 'XD-04', p1: 'Rohan', r1: 3, p2: 'Nesara Vijay', r2: 2 },
+      { id: 'XD-05', p1: 'Sindhushree', r1: 1, p2: 'Kishan Sawant', r2: 3 },
+      { id: 'XD-06', p1: 'Muhammad Asim', r1: 3, p2: 'Alena', r2: 3 },
+      { id: 'XD-07', p1: 'Mayur chauhan', r1: 4, p2: 'Sina Wünsche', r2: 4 },
+      { id: 'XD-08', p1: 'Sachumon Sabu', r1: 3, p2: 'Marie Rasper', r2: 3 },
+      { id: 'XD-09', p1: 'Venkat Medasani', r1: 3, p2: 'Nelima', r2: 2 },
+      { id: 'XD-10', p1: 'Justine Johney', r1: 3, p2: 'Annet Biju', r2: 3 },
+      { id: 'XD-11', p1: 'Jojas joseph', r1: 3, p2: 'Katerina sieraia', r2: 1 },
+      { id: 'XD-12', p1: 'Manjunath', r1: 2, p2: 'Shreeteja', r2: 1 },
+      { id: 'XD-13', p1: 'Anuj D', r1: 3, p2: 'Selina', r2: 3 },
+      { id: 'XD-14', p1: 'Bibinaz Ibrahim', r1: 2, p2: 'Hrishikesh', r2: 4 },
+      { id: 'XD-15', p1: 'Manas', r1: 4, p2: 'Shruthi', r2: 1 }
+    ];
+
+    const DEFAULT_PLAN = [
+      { key: '08:30 CET', value: 'Player Check-in, Court Warm-up & Official Group Lottery Verification' },
+      { key: '09:00 CET', value: "Men's Doubles Group Stage (24 Teams · 8 Groups of 3 · 24 Matches across Courts 1–3)" },
+      { key: '12:30 CET', value: "Men's Doubles Knockout Rounds (Round of 16, Quarter-Finals, Semi-Finals & Final)" },
+      { key: '14:00 CET', value: 'Mixed Doubles Group Stage (15 Teams · 4 Groups [4-4-4-3] · 21 Matches across Courts 1–3)' },
+      { key: '17:00 CET', value: 'Mixed Doubles Knockout Rounds (Quarter-Finals, Semi-Finals & Championship Final)' },
+      { key: '18:30 CET', value: 'Trophy Presentation & Closing Remarks' }
+    ];
+
+    const DEFAULT_RULES = [
+      { key: 'Scoring Format', value: 'BWF Rally Point System — Best of 3 sets to 21 points (cap at 30 points).' },
+      { key: 'Group Tie-Breakers', value: '1. Match Wins · 2. Head-to-Head Result · 3. Set Difference · 4. Point Difference.' },
+      { key: 'Knockout Qualification', value: 'Top 2 teams from every group advance (WA = Group A Winner, RA = Group A Runner-Up).' },
+      { key: 'Rest & Court Call', value: 'Minimum 1 round rest between consecutive matches; 5-minute grace period after court call.' },
+      { key: 'Score Reporting', value: 'End-of-match final scores are entered exclusively by tournament Admins at the control desk.' }
+    ];
+
+    // =========================================================================
+    // 2. 3-COURT PARALLEL SCHEDULE BLUEPRINTS
+    // =========================================================================
+    const MD_SCHEDULE_BLUEPRINT = [
+      { id: 'MD-01', round: 1, court: 1, stage: 'Group A', tA: 'A1', tB: 'A3', group: 'A' },
+      { id: 'MD-02', round: 1, court: 2, stage: 'Group B', tA: 'B1', tB: 'B3', group: 'B' },
+      { id: 'MD-03', round: 1, court: 3, stage: 'Group C', tA: 'C1', tB: 'C3', group: 'C' },
+      { id: 'MD-04', round: 2, court: 1, stage: 'Group D', tA: 'D1', tB: 'D3', group: 'D' },
+      { id: 'MD-05', round: 2, court: 2, stage: 'Group E', tA: 'E1', tB: 'E3', group: 'E' },
+      { id: 'MD-06', round: 2, court: 3, stage: 'Group F', tA: 'F1', tB: 'F3', group: 'F' },
+      { id: 'MD-07', round: 3, court: 1, stage: 'Group G', tA: 'G1', tB: 'G3', group: 'G' },
+      { id: 'MD-08', round: 3, court: 2, stage: 'Group H', tA: 'H1', tB: 'H3', group: 'H' },
+      { id: 'MD-09', round: 3, court: 3, stage: 'Group A', tA: 'A2', tB: 'A3', group: 'A' },
+      { id: 'MD-10', round: 4, court: 1, stage: 'Group B', tA: 'B2', tB: 'B3', group: 'B' },
+      { id: 'MD-11', round: 4, court: 2, stage: 'Group C', tA: 'C2', tB: 'C3', group: 'C' },
+      { id: 'MD-12', round: 4, court: 3, stage: 'Group D', tA: 'D2', tB: 'D3', group: 'D' },
+      { id: 'MD-13', round: 5, court: 1, stage: 'Group E', tA: 'E2', tB: 'E3', group: 'E' },
+      { id: 'MD-14', round: 5, court: 2, stage: 'Group F', tA: 'F2', tB: 'F3', group: 'F' },
+      { id: 'MD-15', round: 5, court: 3, stage: 'Group G', tA: 'G2', tB: 'G3', group: 'G' },
+      { id: 'MD-16', round: 6, court: 1, stage: 'Group H', tA: 'H2', tB: 'H3', group: 'H' },
+      { id: 'MD-17', round: 6, court: 2, stage: 'Group A', tA: 'A1', tB: 'A2', group: 'A' },
+      { id: 'MD-18', round: 6, court: 3, stage: 'Group B', tA: 'B1', tB: 'B2', group: 'B' },
+      { id: 'MD-19', round: 7, court: 1, stage: 'Group C', tA: 'C1', tB: 'C2', group: 'C' },
+      { id: 'MD-20', round: 7, court: 2, stage: 'Group D', tA: 'D1', tB: 'D2', group: 'D' },
+      { id: 'MD-21', round: 7, court: 3, stage: 'Group E', tA: 'E1', tB: 'E2', group: 'E' },
+      { id: 'MD-22', round: 8, court: 1, stage: 'Group F', tA: 'F1', tB: 'F2', group: 'F' },
+      { id: 'MD-23', round: 8, court: 2, stage: 'Group G', tA: 'G1', tB: 'G2', group: 'G' },
+      { id: 'MD-24', round: 8, court: 3, stage: 'Group H', tA: 'H1', tB: 'H2', group: 'H' },
+
+      { id: 'MD-25', round: 9, court: 1, stage: 'Round of 16', tA: 'WA', tB: 'RB', bracketTag: 'WA vs RB (QF1)' },
+      { id: 'MD-26', round: 9, court: 2, stage: 'Round of 16', tA: 'WB', tB: 'RA', bracketTag: 'WB vs RA (QF2)' },
+      { id: 'MD-27', round: 9, court: 3, stage: 'Round of 16', tA: 'WC', tB: 'RD', bracketTag: 'WC vs RD (QF3)' },
+      { id: 'MD-28', round: 10, court: 1, stage: 'Round of 16', tA: 'WD', tB: 'RC', bracketTag: 'WD vs RC (QF4)' },
+      { id: 'MD-29', round: 10, court: 2, stage: 'Round of 16', tA: 'WE', tB: 'RF', bracketTag: 'WE vs RF (QF5)' },
+      { id: 'MD-30', round: 10, court: 3, stage: 'Round of 16', tA: 'WF', tB: 'RE', bracketTag: 'WF vs RE (QF6)' },
+      { id: 'MD-31', round: 11, court: 1, stage: 'Round of 16', tA: 'WG', tB: 'RH', bracketTag: 'WG vs RH (QF7)' },
+      { id: 'MD-32', round: 11, court: 2, stage: 'Round of 16', tA: 'WH', tB: 'RG', bracketTag: 'WH vs RG (QF8)' },
+
+      { id: 'MD-33', round: 12, court: 1, stage: 'Quarter-Final', tA: 'W_MD-25', tB: 'W_MD-26', bracketTag: 'W QF1 vs W QF2 (SF1)' },
+      { id: 'MD-34', round: 12, court: 2, stage: 'Quarter-Final', tA: 'W_MD-27', tB: 'W_MD-28', bracketTag: 'W QF3 vs W QF4 (SF2)' },
+      { id: 'MD-35', round: 12, court: 3, stage: 'Quarter-Final', tA: 'W_MD-29', tB: 'W_MD-30', bracketTag: 'W QF5 vs W QF6 (SF3)' },
+      { id: 'MD-36', round: 13, court: 1, stage: 'Quarter-Final', tA: 'W_MD-31', tB: 'W_MD-32', bracketTag: 'W QF7 vs W QF8 (SF4)' },
+
+      { id: 'MD-37', round: 14, court: 1, stage: 'Semi-Final', tA: 'W_MD-33', tB: 'W_MD-34', bracketTag: 'W SF1 vs W SF2 (Final-A)' },
+      { id: 'MD-38', round: 14, court: 2, stage: 'Semi-Final', tA: 'W_MD-35', tB: 'W_MD-36', bracketTag: 'W SF3 vs W SF4 (Final-B)' },
+      { id: 'MD-39', round: 15, court: 1, stage: 'Championship Final', tA: 'W_MD-37', tB: 'W_MD-38', bracketTag: 'W Final-A vs W Final-B (Championship)' }
+    ];
+
+    const XD_SCHEDULE_BLUEPRINT = [
+      { id: 'XD-01', round: 1, court: 1, stage: 'Group A', tA: 'A1', tB: 'A4', group: 'A' },
+      { id: 'XD-02', round: 1, court: 2, stage: 'Group A', tA: 'A2', tB: 'A3', group: 'A' },
+      { id: 'XD-03', round: 1, court: 3, stage: 'Group B', tA: 'B1', tB: 'B4', group: 'B' },
+      { id: 'XD-04', round: 2, court: 1, stage: 'Group B', tA: 'B2', tB: 'B3', group: 'B' },
+      { id: 'XD-05', round: 2, court: 2, stage: 'Group C', tA: 'C1', tB: 'C4', group: 'C' },
+      { id: 'XD-06', round: 2, court: 3, stage: 'Group C', tA: 'C2', tB: 'C3', group: 'C' },
+      { id: 'XD-07', round: 3, court: 1, stage: 'Group D', tA: 'D2', tB: 'D3', group: 'D' },
+      { id: 'XD-08', round: 3, court: 2, stage: 'Group A', tA: 'A1', tB: 'A3', group: 'A' },
+      { id: 'XD-09', round: 3, court: 3, stage: 'Group A', tA: 'A2', tB: 'A4', group: 'A' },
+      { id: 'XD-10', round: 4, court: 1, stage: 'Group B', tA: 'B1', tB: 'B3', group: 'B' },
+      { id: 'XD-11', round: 4, court: 2, stage: 'Group B', tA: 'B2', tB: 'B4', group: 'B' },
+      { id: 'XD-12', round: 4, court: 3, stage: 'Group C', tA: 'C1', tB: 'C3', group: 'C' },
+      { id: 'XD-13', round: 5, court: 1, stage: 'Group C', tA: 'C2', tB: 'C4', group: 'C' },
+      { id: 'XD-14', round: 5, court: 2, stage: 'Group D', tA: 'D1', tB: 'D3', group: 'D' },
+      { id: 'XD-15', round: 5, court: 3, stage: 'Group A', tA: 'A1', tB: 'A2', group: 'A' },
+      { id: 'XD-16', round: 6, court: 1, stage: 'Group A', tA: 'A3', tB: 'A4', group: 'A' },
+      { id: 'XD-17', round: 6, court: 2, stage: 'Group B', tA: 'B1', tB: 'B2', group: 'B' },
+      { id: 'XD-18', round: 6, court: 3, stage: 'Group B', tA: 'B3', tB: 'B4', group: 'B' },
+      { id: 'XD-19', round: 7, court: 1, stage: 'Group C', tA: 'C1', tB: 'C2', group: 'C' },
+      { id: 'XD-20', round: 7, court: 2, stage: 'Group C', tA: 'C3', tB: 'C4', group: 'C' },
+      { id: 'XD-21', round: 7, court: 3, stage: 'Group D', tA: 'D1', tB: 'D2', group: 'D' },
+
+      { id: 'XD-22', round: 8, court: 1, stage: 'Quarter-Final', tA: 'WA', tB: 'RB', bracketTag: 'WA vs RB (QF1)' },
+      { id: 'XD-23', round: 8, court: 2, stage: 'Quarter-Final', tA: 'WB', tB: 'RA', bracketTag: 'WB vs RA (QF2)' },
+      { id: 'XD-24', round: 8, court: 3, stage: 'Quarter-Final', tA: 'WC', tB: 'RD', bracketTag: 'WC vs RD (QF3)' },
+      { id: 'XD-25', round: 9, court: 1, stage: 'Quarter-Final', tA: 'WD', tB: 'RC', bracketTag: 'WD vs RC (QF4)' },
+
+      { id: 'XD-26', round: 10, court: 1, stage: 'Semi-Final', tA: 'W_XD-22', tB: 'W_XD-23', bracketTag: 'W QF1 vs W QF2 (SF1)' },
+      { id: 'XD-27', round: 10, court: 2, stage: 'Semi-Final', tA: 'W_XD-24', tB: 'W_XD-25', bracketTag: 'W QF3 vs W QF4 (SF2)' },
+      { id: 'XD-28', round: 11, court: 1, stage: 'Championship Final', tA: 'W_XD-26', tB: 'W_XD-27', bracketTag: 'W SF1 vs W SF2 (Championship)' }
+    ];
+
+    // =========================================================================
+    // 3. STATE MANAGEMENT & PERSISTENCE
     // =========================================================================
     const state = {
-      activeTab: 'lottery',
-      isAdmin: false,
+      accessRole: null, // 'viewer' | 'admin' | null (landing gate)
+      activeTab: 'schedule',
       appsScriptUrl: DEFAULT_SCRIPT_URL,
       lotteryCat: 'MD',
       teamsFilter: 'ALL',
@@ -819,15 +1033,1099 @@ function doPost(e) {
     }
 
     // =========================================================================
-    // 4. OFFICIAL SNAKE-DRAFT BALANCED LOTTERY ENGINE (NO DEMO MODE)
-// ... existing code ... -->
+    // 4. LANDING GATE & ROLE-BASED ACCESS CONTROL (VIEWER VS. ADMIN)
+    // =========================================================================
+    function isAdmin() {
+      return state.accessRole === 'admin';
+    }
+
+    function togglePasscodeVisibility(inputId, iconId) {
+      const inp = document.getElementById(inputId);
+      const ico = document.getElementById(iconId);
+      if (!inp || !ico) return;
+      if (inp.type === 'password') {
+        inp.type = 'text';
+        ico.className = 'fa-regular fa-eye-slash';
+      } else {
+        inp.type = 'password';
+        ico.className = 'fa-regular fa-eye';
+      }
+    }
+
+    function enterAsViewer(initialTab = 'schedule') {
+      state.accessRole = 'viewer';
+      try { sessionStorage.setItem(ROLE_STORAGE_KEY, 'viewer'); } catch (e) {}
+      applyAccessModeUI();
+      switchTab(initialTab);
+      showToast('Entered in Viewer Mode (Read-Only)', 'info');
+    }
+
+    function handleLandingAdminLogin(event) {
+      if (event) event.preventDefault();
+      const input = document.getElementById('landingPasscodeInput');
+      const err = document.getElementById('landingLoginError');
+      const entered = (input.value || '').trim().toUpperCase();
+
+      if (entered === ADMIN_PASSCODE) {
+        err.classList.add('hidden');
+        input.value = '';
+        state.accessRole = 'admin';
+        try { sessionStorage.setItem(ROLE_STORAGE_KEY, 'admin'); } catch (e) {}
+        applyAccessModeUI();
+        switchTab('schedule');
+        showToast('Admin Mode unlocked! You can now update scores and sync Sheets.');
+      } else {
+        err.classList.remove('hidden');
+        input.focus();
+      }
+    }
+
+    function openHeaderAdminModal() {
+      document.getElementById('modalLoginError').classList.add('hidden');
+      document.getElementById('modalPasscodeInput').value = '';
+      document.getElementById('headerAdminModal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('modalPasscodeInput').focus(), 50);
+    }
+
+    function closeHeaderAdminModal() {
+      document.getElementById('headerAdminModal').classList.add('hidden');
+    }
+
+    function handleModalAdminLogin(event) {
+      if (event) event.preventDefault();
+      const input = document.getElementById('modalPasscodeInput');
+      const err = document.getElementById('modalLoginError');
+      const entered = (input.value || '').trim().toUpperCase();
+
+      if (entered === ADMIN_PASSCODE) {
+        err.classList.add('hidden');
+        input.value = '';
+        state.accessRole = 'admin';
+        try { sessionStorage.setItem(ROLE_STORAGE_KEY, 'admin'); } catch (e) {}
+        closeHeaderAdminModal();
+        applyAccessModeUI();
+        renderAllTabs();
+        showToast('Admin Mode unlocked!');
+      } else {
+        err.classList.remove('hidden');
+        input.focus();
+      }
+    }
+
+    function switchToViewerMode() {
+      state.accessRole = 'viewer';
+      try { sessionStorage.setItem(ROLE_STORAGE_KEY, 'viewer'); } catch (e) {}
+      applyAccessModeUI();
+      renderAllTabs();
+      showToast('Switched to Viewer Mode (Read-Only)', 'info');
+    }
+
+    function returnToLandingGate() {
+      document.getElementById('mainPortalShell').classList.add('hidden');
+      document.getElementById('landingGateView').classList.remove('hidden');
+    }
+
+    function applyAccessModeUI() {
+      const gate = document.getElementById('landingGateView');
+      const shell = document.getElementById('mainPortalShell');
+      const admin = isAdmin();
+
+      if (!state.accessRole) {
+        gate.classList.remove('hidden');
+        shell.classList.add('hidden');
+        return;
+      }
+
+      gate.classList.add('hidden');
+      shell.classList.remove('hidden');
+
+      document.getElementById('headerViewerControls').classList.toggle('hidden', admin);
+      document.getElementById('headerAdminControls').classList.toggle('hidden', !admin);
+      document.getElementById('headerAdminControls').classList.toggle('flex', admin);
+
+      document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', !admin));
+      document.querySelectorAll('.spectator-only').forEach(el => el.classList.toggle('hidden', admin));
+
+      const heroBannerText = document.getElementById('heroRoleBannerText');
+      if (heroBannerText) {
+        heroBannerText.textContent = admin
+          ? 'Admin Control Desk • Full Score Entry, Lottery & Google Sheets Sync Enabled'
+          : 'Viewer Mode • Live Read-Only Standings, Roster & 3-Court Schedule';
+      }
+    }
+
+    function requireAdmin() {
+      if (!isAdmin()) {
+        showToast('Only Admins can update scores or edit tournament data.', 'error');
+        openHeaderAdminModal();
+        return false;
+      }
+      return true;
+    }
+
+    // =========================================================================
+    // 5. OFFICIAL SNAKE-DRAFT BALANCED LOTTERY ENGINE
+    // =========================================================================
+    function shuffleArray(list) {
+      const arr = [...list];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function buildSnakeDraftQueue(cat) {
+      const roster = (cat === 'MD' ? RAW_MD_ROSTER : RAW_XD_ROSTER).map(t => ({
+        ...t,
+        combinedSkill: t.r1 + t.r2
+      }));
+
+      roster.sort((a, b) => {
+        if (b.combinedSkill !== a.combinedSkill) return b.combinedSkill - a.combinedSkill;
+        return Math.random() - 0.5;
+      });
+
+      const slots = {};
+      const assignments = [];
+
+      if (cat === 'MD') {
+        const groups = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        groups.forEach(g => {
+          slots[`${g}1`] = null;
+          slots[`${g}2`] = null;
+          slots[`${g}3`] = null;
+        });
+
+        const pot1 = shuffleArray(roster.slice(0, 8));
+        const pot2 = shuffleArray(roster.slice(8, 16));
+        const pot3 = shuffleArray(roster.slice(16, 24));
+
+        groups.forEach((g, i) => {
+          if (pot1[i]) assignments.push({ slot: `${g}1`, group: g, team: pot1[i] });
+          if (pot2[i]) assignments.push({ slot: `${g}2`, group: g, team: pot2[i] });
+          if (pot3[i]) assignments.push({ slot: `${g}3`, group: g, team: pot3[i] });
+        });
+      } else {
+        const groups = ['A', 'B', 'C', 'D'];
+        groups.forEach(g => {
+          slots[`${g}1`] = null;
+          slots[`${g}2`] = null;
+          slots[`${g}3`] = null;
+          if (g !== 'D') slots[`${g}4`] = null;
+        });
+
+        const pot1 = shuffleArray(roster.slice(0, 4));
+        const pot2 = shuffleArray(roster.slice(4, 8));
+        const pot3 = shuffleArray(roster.slice(8, 12));
+        const pot4 = shuffleArray(roster.slice(12, 15));
+
+        groups.forEach((g, i) => {
+          if (pot1[i]) assignments.push({ slot: `${g}1`, group: g, team: pot1[i] });
+          if (pot2[i]) assignments.push({ slot: `${g}2`, group: g, team: pot2[i] });
+          if (pot3[i]) assignments.push({ slot: `${g}3`, group: g, team: pot3[i] });
+        });
+        ['A', 'B', 'C'].forEach((g, i) => {
+          if (pot4[i]) assignments.push({ slot: `${g}4`, group: g, team: pot4[i] });
+        });
+      }
+
+      return { slots, queue: shuffleArray(assignments) };
+    }
+
+    function setLotteryCategory(cat) {
+      state.lotteryCat = cat;
+      document.getElementById('btnLotteryCatMD').className = cat === 'MD'
+        ? 'px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-court-600 text-white shadow-sm transition'
+        : 'px-4 py-2 rounded-lg text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition';
+      document.getElementById('btnLotteryCatXD').className = cat === 'XD'
+        ? 'px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-shuttle-400 text-slate-950 shadow-sm transition'
+        : 'px-4 py-2 rounded-lg text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition';
+      renderLotteryTab();
+    }
+
+    function drawNextTeam() {
+      if (!requireAdmin()) return;
+      const cat = state.lotteryCat;
+      const drawObj = state.lottery[cat];
+      if (!drawObj || drawObj.queue.length === 0) {
+        showToast('All teams in this division have already been drawn!', 'info');
+        return;
+      }
+
+      const next = drawObj.queue.shift();
+      drawObj.slots[next.slot] = next.team;
+
+      if (drawObj.queue.length === 0) {
+        state.officialLocked[cat] = true;
+        if (typeof confetti === 'function') confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+      }
+
+      saveLocalState();
+      const card = document.getElementById('lotterySpotlightCard');
+      card.classList.remove('animate-in');
+      void card.offsetWidth;
+      card.classList.add('animate-in');
+
+      document.getElementById('lotterySpotlightTeam').textContent = getTeamDisplayName(next.team);
+      document.getElementById('lotterySpotlightSub').textContent = `Assigned to Group ${next.group} — Slot ${next.slot}`;
+      renderAllTabs();
+    }
+
+    function autoDrawAll(silent = false) {
+      if (!requireAdmin()) return;
+      const cat = state.lotteryCat;
+      const drawObj = state.lottery[cat];
+      while (drawObj.queue.length > 0) {
+        const next = drawObj.queue.shift();
+        drawObj.slots[next.slot] = next.team;
+      }
+      state.officialLocked[cat] = true;
+      saveLocalState();
+
+      if (!silent) {
+        if (typeof confetti === 'function') confetti({ particleCount: 110, spread: 80, origin: { y: 0.6 } });
+        showToast(`All ${cat === 'MD' ? "Men's Doubles" : "Mixed Doubles"} groups drawn & scheduled!`);
+      }
+      renderAllTabs();
+    }
+
+    async function autoDrawAllAndSaveToSheets() {
+      if (!requireAdmin()) return;
+      autoDrawAll(true);
+      saveLocalState();
+      renderAllTabs();
+      if (typeof confetti === 'function') confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+      await pushAllToAppsScript(false);
+    }
+
+    function resetLotteryCategory() {
+      if (!requireAdmin()) return;
+      const cat = state.lotteryCat;
+      state.lottery[cat] = buildSnakeDraftQueue(cat);
+      state.officialLocked[cat] = false;
+      saveLocalState();
+      renderAllTabs();
+      showToast(`Reset ${cat === 'MD' ? "Men's Doubles" : "Mixed Doubles"} draw drum.`, 'info');
+    }
+
+    function renderLotteryTab() {
+      const cat = state.lotteryCat;
+      const drawObj = state.lottery[cat];
+      const total = cat === 'MD' ? 24 : 15;
+      const remaining = drawObj.queue.length;
+      const drawn = total - remaining;
+      const pct = Math.round((drawn / total) * 100);
+
+      document.getElementById('lotteryProgressLabel').textContent = `${drawn} of ${total} teams drawn`;
+      document.getElementById('lotteryPercentLabel').textContent = `${pct}%`;
+      document.getElementById('lotteryProgressBar').style.width = `${pct}%`;
+
+      const lockedBadge = document.getElementById('lotteryLockedBadge');
+      const statusTag = document.getElementById('lotteryStatusTag');
+
+      if (remaining === 0) {
+        lockedBadge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200';
+        lockedBadge.textContent = 'Official Draw Complete & Locked';
+        statusTag.textContent = 'GROUPS LOCKED & SCHEDULED';
+        document.getElementById('lotterySpotlightTeam').textContent = `All ${cat === 'MD' ? "Men's Doubles" : "Mixed Doubles"} Groups Finalized`;
+        document.getElementById('lotterySpotlightSub').textContent = 'Groups are live on the 3-Court Parallel Schedule.';
+      } else {
+        lockedBadge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200';
+        lockedBadge.textContent = `${drawn}/${total} Drawn`;
+        statusTag.textContent = 'OFFICIAL DRAW IN PROGRESS';
+        if (drawn === 0) {
+          document.getElementById('lotterySpotlightTeam').textContent = `Ready for ${cat === 'MD' ? "Men's Doubles" : "Mixed Doubles"} Draw`;
+          document.getElementById('lotterySpotlightSub').textContent = cat === 'MD'
+            ? '24 teams queued across 8 balanced groups (A–H · 3 teams per group)'
+            : '15 teams queued across 4 balanced groups (A–D · 4-4-4-3 format)';
+        }
+      }
+
+      const groups = cat === 'MD' ? ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'] : ['A', 'B', 'C', 'D'];
+      const grid = document.getElementById('lotteryGroupsGrid');
+      grid.innerHTML = '';
+
+      groups.forEach(g => {
+        const slotKeys = Object.keys(drawObj.slots).filter(k => k.startsWith(g)).sort();
+        const isGroupFull = slotKeys.every(k => drawObj.slots[k] !== null);
+
+        let rowsHtml = '';
+        slotKeys.forEach(k => {
+          const team = drawObj.slots[k];
+          if (team) {
+            rowsHtml += `
+              <div class="px-3.5 py-2.5 flex items-center gap-2.5 border-b border-slate-100 last:border-b-0 bg-court-50/40 animate-in">
+                <span class="w-7 h-7 rounded-lg bg-court-600 text-white font-extrabold text-xs flex items-center justify-center shrink-0">
+                  ${k}
+                </span>
+                <span class="text-xs sm:text-sm font-bold text-slate-900 leading-snug">${getTeamDisplayName(team)}</span>
+              </div>
+            `;
+          } else {
+            rowsHtml += `
+              <div class="px-3.5 py-2.5 flex items-center gap-2.5 border-b border-slate-100 last:border-b-0">
+                <span class="w-7 h-7 rounded-lg bg-slate-100 text-slate-400 border border-slate-200 font-bold text-xs flex items-center justify-center shrink-0">
+                  ${k}
+                </span>
+                <span class="text-xs italic text-slate-400">Awaiting draw...</span>
+              </div>
+            `;
+          }
+        });
+
+        const card = document.createElement('div');
+        card.className = `bg-white rounded-2xl border ${isGroupFull ? 'border-court-500/50' : 'border-slate-200/80'} shadow-sm overflow-hidden flex flex-col`;
+        card.innerHTML = `
+          <div class="px-4 py-2.5 bg-slate-900 text-white flex items-center justify-between">
+            <span class="font-extrabold text-sm">Group ${g}</span>
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full ${isGroupFull ? 'bg-court-600 text-white' : 'bg-slate-800 text-slate-300'}">
+              ${slotKeys.filter(k => drawObj.slots[k]).length}/${slotKeys.length} Teams
+            </span>
+          </div>
+          <div class="flex-1 flex flex-col justify-center">${rowsHtml}</div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // =========================================================================
+    // 6. PLAYERS & TEAMS TAB (NAMES & GROUP SLOTS ONLY)
+    // =========================================================================
+    function setTeamsFilter(val) {
+      state.teamsFilter = val;
+      ['ALL', 'MD', 'XD'].forEach(k => {
+        document.getElementById(`teamsFilter${k}`).className = k === val
+          ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-court-600 text-white'
+          : 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900';
+      });
+      renderTeamsTab();
+    }
+
+    function renderTeamsTab() {
+      const container = document.getElementById('teamsContainer');
+      const query = (document.getElementById('teamSearchInput').value || '').trim().toLowerCase();
+      container.innerHTML = '';
+
+      const categories = state.teamsFilter === 'ALL' ? ['MD', 'XD'] : [state.teamsFilter];
+      categories.forEach(cat => {
+        const roster = cat === 'MD' ? RAW_MD_ROSTER : RAW_XD_ROSTER;
+        const slotMap = {};
+        Object.entries(state.lottery[cat].slots || {}).forEach(([slot, team]) => {
+          if (team) slotMap[team.id] = slot;
+        });
+
+        const filtered = roster.filter(t => {
+          if (!query) return true;
+          const slot = slotMap[t.id] || '';
+          return `${t.id} ${t.p1} ${t.p2} group ${slot}`.toLowerCase().includes(query);
+        });
+
+        if (filtered.length === 0) return;
+
+        const section = document.createElement('div');
+        section.className = 'bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden';
+        const cardsHtml = filtered.map(t => {
+          const slot = slotMap[t.id];
+          return `
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="px-2 py-1 rounded-lg bg-slate-900 text-shuttle-400 font-extrabold text-[11px] shrink-0">${t.id}</span>
+                <div class="min-w-0">
+                  <p class="text-xs sm:text-sm font-bold text-slate-900 truncate">${t.p1} &amp; ${t.p2}</p>
+                  <p class="text-[11px] text-slate-500">${cat === 'MD' ? "Men's Doubles" : "Mixed Doubles"}</p>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-lg text-xs font-extrabold shrink-0 ${slot ? 'bg-court-100 text-court-800 border border-court-200' : 'bg-slate-200/70 text-slate-500'}">
+                ${slot ? `Group ${slot[0]} (${slot})` : 'TBD'}
+              </span>
+            </div>
+          `;
+        }).join('');
+
+        section.innerHTML = `
+          <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between">
+            <h3 class="font-extrabold text-sm sm:text-base">
+              ${cat === 'MD' ? "Men's Doubles Teams (24 Pairs)" : "Mixed Doubles Teams (15 Pairs)"}
+            </h3>
+            <span class="text-xs font-semibold text-shuttle-400">${filtered.length} Shown</span>
+          </div>
+          <div class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            ${cardsHtml}
+          </div>
+        `;
+        container.appendChild(section);
+      });
+    }
+
+    // =========================================================================
+    // 7. STANDINGS & KNOCKOUT RESOLUTION ENGINE
+    // =========================================================================
+    function computeStandings(cat) {
+      const slots = state.lottery[cat].slots || {};
+      const blueprint = cat === 'MD' ? MD_SCHEDULE_BLUEPRINT : XD_SCHEDULE_BLUEPRINT;
+      const groups = cat === 'MD' ? ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'] : ['A', 'B', 'C', 'D'];
+      const standings = {};
+
+      groups.forEach(g => {
+        const slotKeys = Object.keys(slots).filter(k => k.startsWith(g)).sort();
+        const table = {};
+        slotKeys.forEach(code => {
+          const team = slots[code];
+          table[code] = {
+            code,
+            name: team ? getTeamDisplayName(team) : `Slot ${code}`,
+            played: 0,
+            wins: 0,
+            losses: 0,
+            setsWon: 0,
+            setsLost: 0,
+            ptsFor: 0,
+            ptsAgainst: 0,
+            matchPts: 0
+          };
+        });
+
+        blueprint.filter(m => m.group === g).forEach(m => {
+          const res = state.scores[m.id];
+          if (!res || res.status !== 'COMPLETED' || !res.winner) return;
+          const rA = table[m.tA];
+          const rB = table[m.tB];
+          if (!rA || !rB) return;
+
+          rA.played += 1;
+          rB.played += 1;
+          if (res.winner === 1) {
+            rA.wins += 1;
+            rA.matchPts += 2;
+            rB.losses += 1;
+          } else {
+            rB.wins += 1;
+            rB.matchPts += 2;
+            rA.losses += 1;
+          }
+
+          [res.s1, res.s2, res.s3].forEach(s => {
+            if (!s || (s[0] === '' && s[1] === '')) return;
+            const p1 = Number(s[0]) || 0;
+            const p2 = Number(s[1]) || 0;
+            if (p1 === 0 && p2 === 0) return;
+            rA.ptsFor += p1;
+            rA.ptsAgainst += p2;
+            rB.ptsFor += p2;
+            rB.ptsAgainst += p1;
+            if (p1 > p2) { rA.setsWon += 1; rB.setsLost += 1; }
+            else if (p2 > p1) { rB.setsWon += 1; rA.setsLost += 1; }
+          });
+        });
+
+        const sorted = Object.values(table).sort((a, b) => {
+          if (b.wins !== a.wins) return b.wins - a.wins;
+          const sdDiff = (b.setsWon - b.setsLost) - (a.setsWon - a.setsLost);
+          if (sdDiff !== 0) return sdDiff;
+          const pdDiff = (b.ptsFor - b.ptsAgainst) - (a.ptsFor - a.ptsAgainst);
+          if (pdDiff !== 0) return pdDiff;
+          return a.code.localeCompare(b.code);
+        });
+
+        const grpMatches = blueprint.filter(m => m.group === g);
+        const done = grpMatches.filter(m => state.scores[m.id]?.status === 'COMPLETED').length;
+        standings[g] = {
+          rows: sorted,
+          completedCount: done,
+          totalCount: grpMatches.length,
+          isFinished: done === grpMatches.length && grpMatches.length > 0
+        };
+      });
+
+      return standings;
+    }
+
+    function resolveMatchParticipant(cat, token, standings) {
+      const slots = state.lottery[cat].slots || {};
+
+      if (/^[A-H][1-4]$/.test(token)) {
+        const team = slots[token];
+        return {
+          code: token,
+          name: team ? getTeamDisplayName(team) : `${token} (Awaiting Lottery)`,
+          isResolved: Boolean(team)
+        };
+      }
+
+      if (/^[WR][A-H]$/.test(token)) {
+        const type = token[0];
+        const grp = token[1];
+        const grpData = standings[grp];
+        if (grpData && grpData.completedCount > 0) {
+          const candidate = grpData.rows[type === 'W' ? 0 : 1];
+          if (candidate && grpData.isFinished) {
+            return { code: token, name: `${candidate.name} (${candidate.code})`, isResolved: true };
+          } else if (candidate) {
+            return { code: token, name: `${type === 'W' ? '1st' : '2nd'} Grp ${grp} (Live: ${candidate.code})`, isResolved: false };
+          }
+        }
+        return { code: token, name: `${type === 'W' ? 'Winner' : 'Runner-Up'} Group ${grp}`, isResolved: false };
+      }
+
+      if (token.startsWith('W_')) {
+        const prevId = token.slice(2);
+        const prevRes = state.scores[prevId];
+        const bp = cat === 'MD' ? MD_SCHEDULE_BLUEPRINT : XD_SCHEDULE_BLUEPRINT;
+        const prevMatch = bp.find(m => m.id === prevId);
+        if (prevMatch && prevRes && prevRes.status === 'COMPLETED' && prevRes.winner) {
+          const winToken = prevRes.winner === 1 ? prevMatch.tA : prevMatch.tB;
+          const resolved = resolveMatchParticipant(cat, winToken, standings);
+          return { code: prevId, name: resolved.name, isResolved: true };
+        }
+        return { code: prevId, name: `Winner ${prevId}`, isResolved: false };
+      }
+
+      return { code: token, name: token, isResolved: false };
+    }
+
+    function formatScoreString(res) {
+      if (!res || res.status === 'UPCOMING') return '';
+      return [res.s1, res.s2, res.s3]
+        .filter(s => s && (s[0] !== '' || s[1] !== '') && (Number(s[0]) > 0 || Number(s[1]) > 0))
+        .map(s => `${s[0]}-${s[1]}`)
+        .join('  |  ');
+    }
+
+    // =========================================================================
+    // 8. 3-COURT PARALLEL SCHEDULE RENDER & SCORE MODAL
+    // =========================================================================
+    function setScheduleCategory(cat) {
+      state.schedCat = cat;
+      document.getElementById('schedCatMD').className = cat === 'MD'
+        ? 'px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-court-600 text-white shadow-sm transition'
+        : 'px-4 py-2 rounded-lg text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition';
+      document.getElementById('schedCatXD').className = cat === 'XD'
+        ? 'px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-shuttle-400 text-slate-950 shadow-sm transition'
+        : 'px-4 py-2 rounded-lg text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition';
+      renderScheduleTab();
+    }
+
+    function renderScheduleTab() {
+      const cat = state.schedCat;
+      const blueprint = cat === 'MD' ? MD_SCHEDULE_BLUEPRINT : XD_SCHEDULE_BLUEPRINT;
+      const standings = computeStandings(cat);
+      const admin = isAdmin();
+
+      const lockBadge = document.getElementById('scheduleLockStatusBadge');
+      if (admin) {
+        lockBadge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-shuttle-400/20 text-slate-900 border border-shuttle-400';
+        lockBadge.innerHTML = '<i class="fa-solid fa-pen-to-square mr-1 text-court-700"></i>Admin Score Entry Active';
+      } else {
+        lockBadge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200';
+        lockBadge.innerHTML = '<i class="fa-solid fa-lock mr-1"></i>Viewer Read-Only';
+      }
+
+      const rounds = {};
+      blueprint.forEach(m => {
+        if (!rounds[m.round]) rounds[m.round] = { round: m.round, courts: { 1: null, 2: null, 3: null } };
+        rounds[m.round].courts[m.court] = m;
+      });
+
+      const container = document.getElementById('scheduleRoundsContainer');
+      container.innerHTML = '';
+
+      Object.values(rounds).forEach(r => {
+        const isKnockout = r.courts[1]?.stage && !r.courts[1].stage.startsWith('Group');
+        let courtsHtml = '';
+
+        [1, 2, 3].forEach(cNum => {
+          const m = r.courts[cNum];
+          if (!m) {
+            courtsHtml += `
+              <div class="bg-slate-50 border border-dashed border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center text-center min-h-[146px]">
+                <span class="text-xs font-extrabold uppercase text-slate-400">Court ${cNum}</span>
+                <span class="text-xs text-slate-400 mt-1">Open / Rest Buffer</span>
+              </div>
+            `;
+            return;
+          }
+
+          const pA = resolveMatchParticipant(cat, m.tA, standings);
+          const pB = resolveMatchParticipant(cat, m.tB, standings);
+          const res = state.scores[m.id] || { status: 'UPCOMING' };
+
+          let badgeHtml = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">UPCOMING</span>`;
+          let cardBorder = admin ? 'border-slate-200 hover:border-court-500 cursor-pointer' : 'border-slate-200 cursor-default';
+          if (res.status === 'ON_COURT') {
+            badgeHtml = `<span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-100 text-amber-800 animate-pulse">ON COURT</span>`;
+            cardBorder = admin ? 'border-amber-400 bg-amber-50/30 cursor-pointer' : 'border-amber-400 bg-amber-50/30 cursor-default';
+          } else if (res.status === 'COMPLETED') {
+            badgeHtml = `<span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800">FINAL</span>`;
+            cardBorder = admin ? 'border-court-500/60 bg-court-50/30 cursor-pointer' : 'border-court-500/60 bg-court-50/30 cursor-default';
+          }
+
+          const scoreText = formatScoreString(res);
+          const winACls = res.status === 'COMPLETED' && res.winner === 1 ? 'text-court-700 font-extrabold' : 'text-slate-800 font-semibold';
+          const winBCls = res.status === 'COMPLETED' && res.winner === 2 ? 'text-court-700 font-extrabold' : 'text-slate-800 font-semibold';
+          const clickAttr = admin ? `onclick="openScoreModal('${m.id}')"` : '';
+
+          const footerActionHtml = admin
+            ? `<span class="text-xs font-bold text-court-700 hover:underline">${res.status === 'COMPLETED' ? 'Edit Score' : 'Enter Score'} <i class="fa-solid fa-pen-to-square ml-0.5"></i></span>`
+            : `<span class="text-[11px] font-medium text-slate-400"><i class="fa-solid fa-lock mr-1"></i>Admin Only</span>`;
+
+          courtsHtml += `
+            <div ${clickAttr}
+              class="bg-white border ${cardBorder} rounded-xl p-4 transition shadow-sm flex flex-col justify-between gap-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="px-2 py-0.5 rounded-md bg-slate-900 text-shuttle-400 font-extrabold text-xs">Court ${cNum}</span>
+                  <span class="text-[11px] font-bold text-slate-500">${m.id} · ${m.bracketTag || m.stage}</span>
+                </div>
+                ${badgeHtml}
+              </div>
+
+              <div class="space-y-1.5 my-1">
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="text-[11px] font-extrabold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 shrink-0">${pA.code}</span>
+                    <span class="text-xs sm:text-sm ${winACls} truncate">${pA.name}</span>
+                  </div>
+                  ${res.status === 'COMPLETED' && res.winner === 1 ? '<i class="fa-solid fa-trophy text-shuttle-500 text-xs shrink-0"></i>' : ''}
+                </div>
+
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="text-[11px] font-extrabold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 shrink-0">${pB.code}</span>
+                    <span class="text-xs sm:text-sm ${winBCls} truncate">${pB.name}</span>
+                  </div>
+                  ${res.status === 'COMPLETED' && res.winner === 2 ? '<i class="fa-solid fa-trophy text-shuttle-500 text-xs shrink-0"></i>' : ''}
+                </div>
+              </div>
+
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+                <span class="text-xs font-mono font-extrabold ${scoreText ? 'text-court-700' : 'text-slate-400'}">
+                  ${scoreText || (admin ? 'Tap to enter final score' : 'Awaiting match result')}
+                </span>
+                ${footerActionHtml}
+              </div>
+            </div>
+          `;
+        });
+
+        const roundCard = document.createElement('div');
+        roundCard.className = 'bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm';
+        roundCard.innerHTML = `
+          <div class="px-5 py-3 bg-slate-900 text-white flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <span class="px-2.5 py-0.5 rounded-md ${isKnockout ? 'bg-shuttle-400 text-slate-950' : 'bg-court-600 text-white'} font-extrabold text-xs">
+                ROUND ${r.round}
+              </span>
+              <span class="font-bold text-sm">${isKnockout ? 'Knockout Stage' : 'Group Stage Parallel Matches'}</span>
+            </div>
+            <span class="text-xs text-slate-400">3 Courts in Parallel</span>
+          </div>
+          <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-3.5">${courtsHtml}</div>
+        `;
+        container.appendChild(roundCard);
+      });
+    }
+
+    let activeScoreMatchId = null;
+
+    function openScoreModal(matchId) {
+      if (!requireAdmin()) return;
+
+      activeScoreMatchId = matchId;
+      const cat = matchId.startsWith('MD') ? 'MD' : 'XD';
+      const bp = cat === 'MD' ? MD_SCHEDULE_BLUEPRINT : XD_SCHEDULE_BLUEPRINT;
+      const m = bp.find(x => x.id === matchId);
+      if (!m) return;
+
+      const standings = computeStandings(cat);
+      const pA = resolveMatchParticipant(cat, m.tA, standings);
+      const pB = resolveMatchParticipant(cat, m.tB, standings);
+
+      document.getElementById('scoreModalMeta').textContent = `${m.id} · Round ${m.round} · Court ${m.court} · ${m.stage}`;
+      document.getElementById('scoreModalHeading').textContent = m.bracketTag || `${m.stage}: ${m.tA} vs ${m.tB}`;
+      document.getElementById('scoreTeamACode').textContent = pA.code;
+      document.getElementById('scoreTeamAName').textContent = pA.name;
+      document.getElementById('scoreTeamBCode').textContent = pB.code;
+      document.getElementById('scoreTeamBName').textContent = pB.name;
+
+      const existing = state.scores[matchId];
+      document.getElementById('inpSet1A').value = existing?.s1?.[0] ?? '';
+      document.getElementById('inpSet1B').value = existing?.s1?.[1] ?? '';
+      document.getElementById('inpSet2A').value = existing?.s2?.[0] ?? '';
+      document.getElementById('inpSet2B').value = existing?.s2?.[1] ?? '';
+      document.getElementById('inpSet3A').value = existing?.s3?.[0] ?? '';
+      document.getElementById('inpSet3B').value = existing?.s3?.[1] ?? '';
+      document.getElementById('scoreModalStatus').value = existing?.status === 'ON_COURT' ? 'ON_COURT' : 'COMPLETED';
+      document.getElementById('scoreModalError').classList.add('hidden');
+
+      document.getElementById('scoreEntryModal').classList.remove('hidden');
+    }
+
+    function closeScoreModal() {
+      document.getElementById('scoreEntryModal').classList.add('hidden');
+      activeScoreMatchId = null;
+    }
+
+    async function saveMatchScore() {
+      if (!requireAdmin() || !activeScoreMatchId) return;
+
+      const status = document.getElementById('scoreModalStatus').value;
+      const errEl = document.getElementById('scoreModalError');
+
+      if (status === 'UPCOMING') {
+        delete state.scores[activeScoreMatchId];
+        saveLocalState();
+        closeScoreModal();
+        renderAllTabs();
+        await pushAllToAppsScript(true);
+        showToast('Match cleared to UPCOMING', 'info');
+        return;
+      }
+
+      const s1 = [document.getElementById('inpSet1A').value, document.getElementById('inpSet1B').value];
+      const s2 = [document.getElementById('inpSet2A').value, document.getElementById('inpSet2B').value];
+      const s3 = [document.getElementById('inpSet3A').value, document.getElementById('inpSet3B').value];
+
+      if (status === 'ON_COURT') {
+        state.scores[activeScoreMatchId] = { status: 'ON_COURT', s1, s2, s3, winner: null };
+        saveLocalState();
+        closeScoreModal();
+        renderAllTabs();
+        await pushAllToAppsScript(true);
+        showToast('Court status updated to ON COURT');
+        return;
+      }
+
+      let setsA = 0;
+      let setsB = 0;
+      [s1, s2, s3].forEach(([a, b]) => {
+        if (a !== '' && b !== '' && Number(a) !== Number(b)) {
+          if (Number(a) > Number(b)) setsA += 1;
+          else setsB += 1;
+        }
+      });
+
+      if (setsA === setsB || (setsA === 0 && setsB === 0)) {
+        errEl.textContent = 'Enter valid set scores so one team has won more sets (e.g., 21-15, 21-18).';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      state.scores[activeScoreMatchId] = {
+        status: 'COMPLETED',
+        s1, s2, s3,
+        winner: setsA > setsB ? 1 : 2
+      };
+
+      saveLocalState();
+      closeScoreModal();
+      renderAllTabs();
+      await pushAllToAppsScript(true);
+      showToast('Final score saved & synced to Google Sheets!');
+    }
+
+    // =========================================================================
+    // 9. LEADERBOARD & FULL RESULTS RENDER
+    // =========================================================================
+    function setLeaderboardCategory(cat) {
+      state.lbCat = cat;
+      document.getElementById('lbCatMD').className = cat === 'MD'
+        ? 'px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-court-600 text-white shadow-sm transition'
+        : 'px-4 py-2 rounded-lg text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition';
+      document.getElementById('lbCatXD').className = cat === 'XD'
+        ? 'px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-shuttle-400 text-slate-950 shadow-sm transition'
+        : 'px-4 py-2 rounded-lg text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition';
+      renderLeaderboardTab();
+    }
+
+    function renderLeaderboardTab() {
+      const cat = state.lbCat;
+      const blueprint = cat === 'MD' ? MD_SCHEDULE_BLUEPRINT : XD_SCHEDULE_BLUEPRINT;
+      const standings = computeStandings(cat);
+
+      // Podium Summary
+      const finalMatchId = cat === 'MD' ? 'MD-39' : 'XD-28';
+      const finalMatch = blueprint.find(m => m.id === finalMatchId);
+      const finalRes = state.scores[finalMatchId];
+      let championName = 'TBD (Championship Final)';
+      let runnerUpName = 'TBD (Championship Final)';
+
+      if (finalMatch && finalRes && finalRes.status === 'COMPLETED' && finalRes.winner) {
+        const pA = resolveMatchParticipant(cat, finalMatch.tA, standings);
+        const pB = resolveMatchParticipant(cat, finalMatch.tB, standings);
+        championName = finalRes.winner === 1 ? pA.name : pB.name;
+        runnerUpName = finalRes.winner === 1 ? pB.name : pA.name;
+      }
+
+      const completedCount = blueprint.filter(m => state.scores[m.id]?.status === 'COMPLETED').length;
+
+      document.getElementById('podiumContainer').innerHTML = `
+        <div class="bg-gradient-to-br from-slate-900 to-court-900 text-white rounded-2xl p-5 shadow-md border border-court-700/40 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-shuttle-400 text-slate-950 flex items-center justify-center text-xl shrink-0 shadow">
+            <i class="fa-solid fa-trophy"></i>
+          </div>
+          <div class="min-w-0">
+            <p class="text-[11px] font-extrabold uppercase tracking-wider text-shuttle-400">2026 Champion</p>
+            <p class="text-sm sm:text-base font-extrabold text-white truncate mt-0.5">${championName}</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-medal"></i>
+          </div>
+          <div class="min-w-0">
+            <p class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Runner-Up (Finalist)</p>
+            <p class="text-sm sm:text-base font-extrabold text-slate-900 truncate mt-0.5">${runnerUpName}</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-court-50 text-court-600 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-chart-simple"></i>
+          </div>
+          <div>
+            <p class="text-[11px] font-extrabold uppercase tracking-wider text-court-700">Division Progress</p>
+            <p class="text-sm sm:text-base font-extrabold text-slate-900 mt-0.5">${completedCount} of ${blueprint.length} Matches Completed</p>
+          </div>
+        </div>
+      `;
+
+      // Group Standings Grid
+      const grpGrid = document.getElementById('leaderboardGroupsGrid');
+      grpGrid.innerHTML = '';
+
+      Object.entries(standings).forEach(([grp, data]) => {
+        const rowsHtml = data.rows.map((r, idx) => {
+          const qualifies = idx < 2;
+          const sd = r.setsWon - r.setsLost;
+          const pd = r.ptsFor - r.ptsAgainst;
+          return `
+            <tr class="border-b border-slate-100 last:border-b-0 ${qualifies ? 'bg-court-50/40' : ''}">
+              <td class="py-2.5 px-3 text-xs font-extrabold">
+                <span class="inline-flex items-center justify-center w-5 h-5 rounded ${qualifies ? 'bg-court-600 text-white' : 'bg-slate-100 text-slate-500'}">
+                  ${idx + 1}
+                </span>
+              </td>
+              <td class="py-2.5 px-2">
+                <span class="text-xs font-extrabold text-court-700 mr-1">${r.code}</span>
+                <span class="text-xs sm:text-sm font-bold text-slate-900">${r.name}</span>
+              </td>
+              <td class="py-2.5 px-2 text-center text-xs text-slate-600">${r.played}</td>
+              <td class="py-2.5 px-2 text-center text-xs font-extrabold text-court-700">${r.wins}</td>
+              <td class="py-2.5 px-2 text-center text-xs text-slate-500">${r.losses}</td>
+              <td class="py-2.5 px-2 text-center text-xs font-mono ${sd >= 0 ? 'text-slate-700' : 'text-rose-600'}">${sd > 0 ? '+' + sd : sd}</td>
+              <td class="py-2.5 px-3 text-center text-xs font-mono ${pd >= 0 ? 'text-slate-700' : 'text-rose-600'}">${pd > 0 ? '+' + pd : pd}</td>
+            </tr>
+          `;
+        }).join('');
+
+        const card = document.createElement('div');
+        card.className = 'bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm';
+        card.innerHTML = `
+          <div class="px-4 py-3 bg-slate-900 text-white flex items-center justify-between">
+            <span class="font-extrabold text-sm">Group ${grp}</span>
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full ${data.isFinished ? 'bg-court-600 text-white' : 'bg-slate-800 text-slate-300'}">
+              ${data.completedCount}/${data.totalCount} Played ${data.isFinished ? `· W${grp} & R${grp} Locked` : ''}
+            </span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="text-[10px] font-extrabold uppercase text-slate-400 border-b border-slate-100 bg-slate-50">
+                  <th class="py-2 px-3">#</th>
+                  <th class="py-2 px-2">Team</th>
+                  <th class="py-2 px-2 text-center">P</th>
+                  <th class="py-2 px-2 text-center">W</th>
+                  <th class="py-2 px-2 text-center">L</th>
+                  <th class="py-2 px-2 text-center">SD</th>
+                  <th class="py-2 px-3 text-center">PD</th>
+                </tr>
+              </thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+          </div>
+        `;
+        grpGrid.appendChild(card);
+      });
+
+      // Full Results Table
+      const tbody = document.getElementById('fullResultsTableBody');
+      tbody.innerHTML = blueprint.map(m => {
+        const pA = resolveMatchParticipant(cat, m.tA, standings);
+        const pB = resolveMatchParticipant(cat, m.tB, standings);
+        const res = state.scores[m.id];
+        const scoreStr = formatScoreString(res) || '—';
+        const winnerName = res?.status === 'COMPLETED' && res.winner
+          ? (res.winner === 1 ? pA.name : pB.name)
+          : '—';
+
+        return `
+          <tr class="hover:bg-slate-50/80">
+            <td class="py-2.5 px-4 font-extrabold text-slate-900">${m.id}</td>
+            <td class="py-2.5 px-3 text-xs text-slate-600">Round ${m.round}</td>
+            <td class="py-2.5 px-3 text-xs font-bold text-slate-700">Court ${m.court}</td>
+            <td class="py-2.5 px-3 text-xs text-slate-600">${m.bracketTag || m.stage}</td>
+            <td class="py-2.5 px-3 text-xs font-semibold text-slate-800">${pA.name} <span class="text-slate-400 mx-1">vs</span> ${pB.name}</td>
+            <td class="py-2.5 px-3 font-mono text-xs font-extrabold text-court-700">${scoreStr}</td>
+            <td class="py-2.5 px-4 text-xs font-extrabold ${winnerName !== '—' ? 'text-court-700' : 'text-slate-400'}">${winnerName}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // 10. PLAN & RULES RENDER & EDIT
+    // =========================================================================
+    function renderRulesTab() {
+      const admin = isAdmin();
+      document.getElementById('planCardsContainer').innerHTML = state.planItems.map((item, i) => `
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-start gap-3">
+          <span class="px-2.5 py-1 rounded-lg bg-court-600 text-white font-extrabold text-xs shrink-0" ${admin ? `contenteditable="true" data-plan-key="${i}"` : ''}>${item.key}</span>
+          <p class="text-xs sm:text-sm font-medium text-slate-800 leading-relaxed" ${admin ? `contenteditable="true" data-plan-val="${i}"` : ''}>${item.value}</p>
+        </div>
+      `).join('');
+
+      document.getElementById('rulesCardsContainer').innerHTML = state.ruleItems.map((item, i) => `
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1">
+          <p class="text-xs font-extrabold uppercase tracking-wider text-court-700" ${admin ? `contenteditable="true" data-rule-key="${i}"` : ''}>${item.key}</p>
+          <p class="text-xs sm:text-sm font-medium text-slate-800 leading-relaxed" ${admin ? `contenteditable="true" data-rule-val="${i}"` : ''}>${item.value}</p>
+        </div>
+      `).join('');
+    }
+
+    async function savePlanRulesEdits() {
+      if (!requireAdmin()) return;
+      document.querySelectorAll('[data-plan-key]').forEach(el => {
+        const idx = Number(el.getAttribute('data-plan-key'));
+        if (state.planItems[idx]) state.planItems[idx].key = el.textContent.trim();
+      });
+      document.querySelectorAll('[data-plan-val]').forEach(el => {
+        const idx = Number(el.getAttribute('data-plan-val'));
+        if (state.planItems[idx]) state.planItems[idx].value = el.textContent.trim();
+      });
+      document.querySelectorAll('[data-rule-key]').forEach(el => {
+        const idx = Number(el.getAttribute('data-rule-key'));
+        if (state.ruleItems[idx]) state.ruleItems[idx].key = el.textContent.trim();
+      });
+      document.querySelectorAll('[data-rule-val]').forEach(el => {
+        const idx = Number(el.getAttribute('data-rule-val'));
+        if (state.ruleItems[idx]) state.ruleItems[idx].value = el.textContent.trim();
+      });
+      saveLocalState();
+      await pushAllToAppsScript(false);
+    }
+
+    // =========================================================================
+    // 11. GOOGLE SHEETS APPS SCRIPT DATABASE SYNC (4 TABS)
+    // =========================================================================
+    function buildFourSheetTables() {
+      const teamsRows = [];
+      ['MD', 'XD'].forEach(cat => {
+        const roster = cat === 'MD' ? RAW_MD_ROSTER : RAW_XD_ROSTER;
+        const slotByTeamId = {};
+        Object.entries(state.lottery[cat].slots || {}).forEach(([slot, t]) => {
+          if (t) slotByTeamId[t.id] = slot;
+        });
+        roster.forEach(t => {
+          const slot = slotByTeamId[t.id] || 'TBD';
+          teamsRows.push({
+            TeamID: t.id,
+            Division: cat === 'MD' ? "Men's Doubles" : "Mixed Doubles",
+            Group: slot !== 'TBD' ? `Group ${slot[0]}` : 'TBD',
+            Slot: slot,
+            Player1: t.p1,
+            Rating1: t.r1,
+            Player2: t.p2,
+            Rating2: t.r2,
+            TotalSkill: t.r1 + t.r2,
+            TeamName: `${t.p1} & ${t.p2}`
+          });
+        });
+      });
+
+      const scheduleRows = [];
+      const resultsRows = [];
+
+      ['MD', 'XD'].forEach(cat => {
+        const bp = cat === 'MD' ? MD_SCHEDULE_BLUEPRINT : XD_SCHEDULE_BLUEPRINT;
+        const standings = computeStandings(cat);
+        bp.forEach(m => {
+          const pA = resolveMatchParticipant(cat, m.tA, standings);
+          const pB = resolveMatchParticipant(cat, m.tB, standings);
+          const res = state.scores[m.id];
+          const status = res?.status || 'UPCOMING';
+          const s1Str = res?.s1 && (res.s1[0] !== '' || res.s1[1] !== '') ? `${res.s1[0]}-${res.s1[1]}` : '';
+          const s2Str = res?.s2 && (res.s2[0] !== '' || res.s2[1] !== '') ? `${res.s2[0]}-${res.s2[1]}` : '';
+          const s3Str = res?.s3 && (res.s3[0] !== '' || res.s3[1] !== '') ? `${res.s3[0]}-${res.s3[1]}` : '';
+          const winnerName = status === 'COMPLETED' && res?.winner ? (res.winner === 1 ? pA.name : pB.name) : '';
+
+          scheduleRows.push({
+            MatchID: m.id,
+            Division: cat === 'MD' ? "Men's Doubles" : "Mixed Doubles",
+            Round: `Round ${m.round}`,
+            Court: `Court ${m.court}`,
+            Stage: m.bracketTag || m.stage,
+            SlotA: m.tA,
+            SlotB: m.tB,
+            TeamA: pA.name,
+            TeamB: pB.name,
+            Status: status
+          });
+
+          resultsRows.push({
+            MatchID: m.id,
+            Division: cat === 'MD' ? "Men's Doubles" : "Mixed Doubles",
+            Stage: m.bracketTag || m.stage,
+            TeamA: pA.name,
+            TeamB: pB.name,
+            Set1: s1Str,
+            Set2: s2Str,
+            Set3: s3Str,
+            Winner: winnerName,
+            Status: status
+          });
+        });
+      });
+
+      const planRulesRows = [
+        ...state.planItems.map(p => ({ Category: 'Plan', Key: p.key, Value: p.value })),
+        ...state.ruleItems.map(r => ({ Category: 'Rules', Key: r.key, Value: r.value }))
+      ];
+
+      return { Teams: teamsRows, Schedule: scheduleRows, Results: resultsRows, PlanRules: planRulesRows };
+    }
+
+    function openSheetsModal() {
+      if (!requireAdmin()) return;
+      document.getElementById('appsScriptUrlInput').value = state.appsScriptUrl || DEFAULT_SCRIPT_URL;
+      document.getElementById('sheetsSyncModal').classList.remove('hidden');
+    }
+
+    function closeSheetsModal() {
+      document.getElementById('sheetsSyncModal').classList.add('hidden');
+    }
+
+    function updateSheetsPill(connected) {
+      const pill = document.getElementById('sheetsStatusPill');
+      const gatePill = document.getElementById('gateSyncStatus');
+      if (pill) {
+        pill.className = connected
+          ? 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-court-900/90 text-emerald-300 border border-court-500/40'
+          : 'px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800 text-slate-300 border border-slate-700';
+        pill.innerHTML = connected
+          ? '<i class="fa-solid fa-cloud-check mr-1 text-shuttle-400"></i>Google Sheets Live'
+          : '<i class="fa-solid fa-database mr-1 text-court-400"></i>Local Cache';
+      }
+      if (gatePill && connected) {
+        gatePill.innerHTML = '<i class="fa-solid fa-circle-check mr-1.5 text-shuttle-400"></i>Live Google Sheets Connected';
+      }
+    }
+
     async function loadFromAppsScript(silent = false) {
       const urlInput = document.getElementById('appsScriptUrlInput');
       const url = (urlInput && urlInput.value.trim()) || state.appsScriptUrl || DEFAULT_SCRIPT_URL;
-      if (!url) {
-        if (!silent) showToast('Paste your Google Apps Script Web App URL first.', 'error');
-        return;
-      }
+      if (!url) return;
       state.appsScriptUrl = url;
       saveLocalState();
 
@@ -838,13 +2136,19 @@ function doPost(e) {
 
         if (Array.isArray(json.data.Teams)) {
           ['MD', 'XD'].forEach(cat => {
-            const rows = json.data.Teams.filter(r => (r.TeamID || '').startsWith(cat) && r.Group && r.Group !== 'TBD' && r.Slot && r.Slot !== 'TBD');
+            const rows = json.data.Teams.filter(r =>
+              String(r.TeamID || '').startsWith(cat) &&
+              r.Group && String(r.Group).toUpperCase() !== 'TBD' &&
+              r.Slot && String(r.Slot).toUpperCase() !== 'TBD'
+            );
             if (rows.length > 0) {
               const slots = {};
+              const rosterList = cat === 'MD' ? RAW_MD_ROSTER : RAW_XD_ROSTER;
               rows.forEach(r => {
-                const rosterList = cat === 'MD' ? RAW_MD_ROSTER : RAW_XD_ROSTER;
-                const found = rosterList.find(x => x.id === r.TeamID) || { id: r.TeamID, p1: r.Player1, p2: r.Player2, r1: 2, r2: 2 };
-                slots[r.Slot] = found;
+                const found = rosterList.find(x => x.id === r.TeamID) || {
+                  id: r.TeamID, p1: r.Player1, p2: r.Player2, r1: Number(r.Rating1) || 2, r2: Number(r.Rating2) || 2
+                };
+                slots[String(r.Slot).trim()] = found;
               });
               state.lottery[cat] = { slots, queue: [] };
               state.officialLocked[cat] = true;
@@ -853,6 +2157,7 @@ function doPost(e) {
         }
 
         if (Array.isArray(json.data.Results)) {
+          const nextScores = {};
           json.data.Results.forEach(r => {
             if (!r.MatchID) return;
             const parseS = (v) => (v && String(v).includes('-')) ? String(v).split('-').map(x => x.trim()) : ['', ''];
@@ -867,13 +2172,13 @@ function doPost(e) {
                   if (Number(a) > Number(b)) w1++; else w2++;
                 }
               });
-              state.scores[r.MatchID] = {
-                status,
-                s1, s2, s3,
+              nextScores[r.MatchID] = {
+                status, s1, s2, s3,
                 winner: status === 'COMPLETED' ? (w1 >= w2 ? 1 : 2) : null
               };
             }
           });
+          state.scores = nextScores;
         }
 
         if (Array.isArray(json.data.PlanRules) && json.data.PlanRules.length > 0) {
@@ -888,25 +2193,139 @@ function doPost(e) {
         renderAllTabs();
         if (!silent) {
           closeSheetsModal();
-          showToast('Pulled live tournament data from Google Sheets!');
+          showToast('Pulled latest live data from Google Sheets!');
         }
       } catch (err) {
         if (!silent) {
-          showToast('Could not read from Apps Script URL. Verify deployment access ("Anyone").', 'error');
+          showToast('Could not fetch from Google Sheets. Verify Apps Script access is "Anyone".', 'error');
         }
       }
     }
 
     async function pushAllToAppsScript(silent = false) {
-// ... existing code ... -->
+      if (!requireAdmin()) return;
+      const urlInput = document.getElementById('appsScriptUrlInput');
+      const url = (urlInput && urlInput.value.trim()) || state.appsScriptUrl || DEFAULT_SCRIPT_URL;
+      state.appsScriptUrl = url;
+      saveLocalState();
+
+      const tables = buildFourSheetTables();
+      try {
+        await fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            passcode: ADMIN_PASSCODE,
+            sheet: 'ALL',
+            tables
+          })
+        });
+        updateSheetsPill(true);
+        if (!silent) {
+          closeSheetsModal();
+          showToast('Saved Teams, Schedule, Results & PlanRules to Google Sheets!');
+        }
+      } catch (err) {
+        if (!silent) showToast('Failed to send data to Google Sheets.', 'error');
+      }
+    }
+
+    function exportFullResultsCSV() {
+      const { Results } = buildFourSheetTables();
+      const headers = Object.keys(Results[0]);
+      const lines = [
+        headers.join(','),
+        ...Results.map(row => headers.map(h => `"${String(row[h] ?? '').replace(/"/g, '""')}"`).join(','))
+      ];
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'DIG_Bremen_Badminton_2026_Results.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Exported full event results to CSV');
+    }
+
+    // =========================================================================
+    // 12. NAVIGATION & INITIALIZATION
+    // =========================================================================
+    function switchTab(tab) {
+      state.activeTab = tab;
+      const tabs = ['schedule', 'leaderboard', 'teams', 'lottery', 'rules'];
+      tabs.forEach(t => {
+        const active = t === tab;
+        const panel = document.getElementById(`tab-${t}`);
+        const navBtn = document.getElementById(`nav-${t}`);
+        if (panel) panel.classList.toggle('hidden', !active);
+        if (navBtn) {
+          navBtn.className = active
+            ? `${t === 'rules' ? 'col-span-2 sm:col-span-1 ' : ''}px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 bg-court-600 text-white shadow-sm`
+            : `${t === 'rules' ? 'col-span-2 sm:col-span-1 ' : ''}px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-slate-300 hover:text-white`;
+        }
+      });
+      renderAllTabs();
+    }
+
+    function renderAllTabs() {
+      const totalMatches = MD_SCHEDULE_BLUEPRINT.length + XD_SCHEDULE_BLUEPRINT.length;
+      const doneMatches = Object.values(state.scores).filter(s => s?.status === 'COMPLETED').length;
+      const heroCounter = document.getElementById('heroCompletedMatches');
+      if (heroCounter) heroCounter.textContent = `${doneMatches} / ${totalMatches}`;
+
+      renderScheduleTab();
+      renderLeaderboardTab();
+      renderTeamsTab();
+      renderLotteryTab();
+      renderRulesTab();
+    }
+
+    let toastTimeout = null;
+    function showToast(msg, type = 'success') {
+      const banner = document.getElementById('toastBanner');
+      const card = document.getElementById('toastCard');
+      const text = document.getElementById('toastText');
+      const icon = document.getElementById('toastIcon');
+
+      text.textContent = msg;
+      if (type === 'error') {
+        card.className = 'pointer-events-auto bg-rose-600 text-white border border-rose-500 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in';
+        icon.className = 'fa-solid fa-circle-exclamation text-white text-lg';
+      } else if (type === 'info') {
+        card.className = 'pointer-events-auto bg-slate-900 text-white border border-slate-700 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in';
+        icon.className = 'fa-solid fa-circle-info text-shuttle-400 text-lg';
+      } else {
+        card.className = 'pointer-events-auto bg-court-700 text-white border border-court-500 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in';
+        icon.className = 'fa-solid fa-circle-check text-shuttle-400 text-lg';
+      }
+
+      banner.classList.remove('hidden');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => banner.classList.add('hidden'), 3200);
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       loadLocalState();
-      if (state.appsScriptUrl) {
-        updateSheetsPill(true);
-      }
+
+      // Restore previous session role if user already chose Viewer or Admin in this browser tab
+      try {
+        const savedRole = sessionStorage.getItem(ROLE_STORAGE_KEY);
+        if (savedRole === 'viewer' || savedRole === 'admin') {
+          state.accessRole = savedRole;
+        }
+      } catch (e) {}
+
+      applyAccessModeUI();
       renderAllTabs();
-      // Automatically pull latest live data from Google Sheets on page load
+
+      // Fetch live Google Sheets data immediately and auto-poll every 20s in Viewer Mode
       loadFromAppsScript(true);
+      setInterval(() => {
+        if (!isAdmin()) {
+          loadFromAppsScript(true);
+        }
+      }, 20000);
     });
   </script>
 </body>
